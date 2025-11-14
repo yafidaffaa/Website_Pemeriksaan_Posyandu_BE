@@ -152,14 +152,14 @@ const calculateAndSaveZScores = async (measurement, checkup) => {
       weight: weightP,
       height: heightP,
       ageMonthsPregnant: measurement.ageMonthsPregnant,
-      lila: lilaP // ✅ Pass LILA ke perhitungan
+      lila: lilaP
     });
 
     if (!zPreg.error) {
-      // ✅ Simpan semua hasil perhitungan
+      // Simpan semua hasil perhitungan
       measurement.zScoreBMIPregnant = zPreg.zScore;
       measurement.stuntingStatus = zPreg.nutritionStatus;
-      measurement.statusGizi = zPreg.bmiClassification;
+      measurement.statusGizi = zPreg.classification;
       
       // Simpan ke dataValues untuk response
       measurement.dataValues.bmi = zPreg.bmi;
@@ -193,7 +193,177 @@ const calculateAndSaveZScores = async (measurement, checkup) => {
 };
 
 // ==========================================
-// 1. UPSERT MEASUREMENT
+// HELPER: Validasi input data measurement
+// ==========================================
+const validateMeasurementInput = (data, patientType) => {
+  const errors = [];
+
+  if (patientType === 'balita') {
+    // Validasi Weight (Berat Badan)
+    if (data.weightKg !== undefined && data.weightKg !== null && data.weightKg !== '') {
+      const weight = parseFloat(data.weightKg);
+      if (isNaN(weight)) {
+        errors.push('Berat badan harus berupa angka');
+      } else if (weight < 0) {
+        errors.push('Berat badan tidak boleh negatif');
+      } else if (weight > 50) {
+        errors.push('Berat badan tidak masuk akal (maksimal 50 kg untuk balita)');
+      } else if (weight < 1) {
+        errors.push('Berat badan terlalu rendah (minimal 1 kg)');
+      }
+    }
+
+    // Validasi Height (Tinggi Badan)
+    if (data.heightCm !== undefined && data.heightCm !== null && data.heightCm !== '') {
+      const height = parseFloat(data.heightCm);
+      if (isNaN(height)) {
+        errors.push('Tinggi badan harus berupa angka');
+      } else if (height < 0) {
+        errors.push('Tinggi badan tidak boleh negatif');
+      } else if (height > 150) {
+        errors.push('Tinggi badan tidak masuk akal (maksimal 150 cm untuk balita)');
+      } else if (height < 30) {
+        errors.push('Tinggi badan terlalu rendah (minimal 30 cm)');
+      }
+    }
+
+    // Validasi Head Circumference (Lingkar Kepala)
+    if (data.headCircCm !== undefined && data.headCircCm !== null && data.headCircCm !== '') {
+      const headCirc = parseFloat(data.headCircCm);
+      if (isNaN(headCirc)) {
+        errors.push('Lingkar kepala harus berupa angka');
+      } else if (headCirc < 0) {
+        errors.push('Lingkar kepala tidak boleh negatif');
+      } else if (headCirc > 60) {
+        errors.push('Lingkar kepala tidak masuk akal (maksimal 60 cm)');
+      } else if (headCirc < 25) {
+        errors.push('Lingkar kepala terlalu rendah (minimal 25 cm)');
+      }
+    }
+
+    // Validasi LILA
+    if (data.lilaCm !== undefined && data.lilaCm !== null && data.lilaCm !== '') {
+      const lila = parseFloat(data.lilaCm);
+      if (isNaN(lila)) {
+        errors.push('LILA harus berupa angka');
+      } else if (lila < 0) {
+        errors.push('LILA tidak boleh negatif');
+      } else if (lila > 30) {
+        errors.push('LILA tidak masuk akal (maksimal 30 cm)');
+      } else if (lila < 8) {
+        errors.push('LILA terlalu rendah (minimal 8 cm)');
+      }
+    }
+
+  } else if (patientType === 'ibu_hamil') {
+    // Validasi Usia Kehamilan
+    if (data.ageMonthsPregnant !== undefined && data.ageMonthsPregnant !== null && data.ageMonthsPregnant !== '') {
+      const agePregnant = parseInt(data.ageMonthsPregnant);
+      if (isNaN(agePregnant)) {
+        errors.push('Usia kehamilan harus berupa angka');
+      } else if (agePregnant < 0) {
+        errors.push('Usia kehamilan tidak boleh negatif');
+      } else if (agePregnant > 9) {
+        errors.push('Usia kehamilan tidak boleh lebih dari 9 bulan');
+      }
+    }
+
+    // Validasi Weight Pregnant (Berat Badan Ibu Hamil)
+    if (data.weightKgPregnant !== undefined && data.weightKgPregnant !== null && data.weightKgPregnant !== '') {
+      const weightPregnant = parseFloat(data.weightKgPregnant);
+      if (isNaN(weightPregnant)) {
+        errors.push('Berat badan harus berupa angka');
+      } else if (weightPregnant < 0) {
+        errors.push('Berat badan tidak boleh negatif');
+      } else if (weightPregnant > 200) {
+        errors.push('Berat badan tidak masuk akal (maksimal 200 kg)');
+      } else if (weightPregnant < 30) {
+        errors.push('Berat badan terlalu rendah (minimal 30 kg)');
+      }
+    }
+
+    // Validasi Height Pregnant (Tinggi Badan Ibu Hamil)
+    if (data.heightCmPregnant !== undefined && data.heightCmPregnant !== null && data.heightCmPregnant !== '') {
+      const heightPregnant = parseFloat(data.heightCmPregnant);
+      if (isNaN(heightPregnant)) {
+        errors.push('Tinggi badan harus berupa angka');
+      } else if (heightPregnant < 0) {
+        errors.push('Tinggi badan tidak boleh negatif');
+      } else if (heightPregnant > 220) {
+        errors.push('Tinggi badan tidak masuk akal (maksimal 220 cm)');
+      } else if (heightPregnant < 130) {
+        errors.push('Tinggi badan terlalu rendah (minimal 130 cm)');
+      }
+    }
+
+    // Validasi LILA Pregnant
+    if (data.lilaCmPregnant !== undefined && data.lilaCmPregnant !== null && data.lilaCmPregnant !== '') {
+      const lilaPregnant = parseFloat(data.lilaCmPregnant);
+      if (isNaN(lilaPregnant)) {
+        errors.push('LILA harus berupa angka');
+      } else if (lilaPregnant < 0) {
+        errors.push('LILA tidak boleh negatif');
+      } else if (lilaPregnant > 50) {
+        errors.push('LILA tidak masuk akal (maksimal 50 cm)');
+      } else if (lilaPregnant < 15) {
+        errors.push('LILA terlalu rendah (minimal 15 cm)');
+      }
+    }
+
+    // Validasi Tekanan Darah
+    if (data.tekananDarah !== undefined && data.tekananDarah !== null && data.tekananDarah !== '') {
+      const bpRegex = /^\d{2,3}\/\d{2,3}$/;
+      if (!bpRegex.test(data.tekananDarah)) {
+        errors.push('Format tekanan darah harus seperti 120/80');
+      } else {
+        const [systolic, diastolic] = data.tekananDarah.split('/').map(Number);
+        if (systolic < 70 || systolic > 250) {
+          errors.push('Tekanan sistolik tidak normal (70-250 mmHg)');
+        }
+        if (diastolic < 40 || diastolic > 150) {
+          errors.push('Tekanan diastolik tidak normal (40-150 mmHg)');
+        }
+        if (systolic <= diastolic) {
+          errors.push('Tekanan sistolik harus lebih besar dari diastolik');
+        }
+      }
+    }
+
+    // Validasi GDS
+    if (data.gds !== undefined && data.gds !== null && data.gds !== '') {
+      const gds = parseFloat(data.gds);
+      if (isNaN(gds)) {
+        errors.push('GDS harus berupa angka');
+      } else if (gds < 0) {
+        errors.push('GDS tidak boleh negatif');
+      } else if (gds > 600) {
+        errors.push('GDS tidak masuk akal (maksimal 600 mg/dL)');
+      }
+    }
+
+    // Validasi HB
+    if (data.HB !== undefined && data.HB !== null && data.HB !== '') {
+      const hb = parseFloat(data.HB);
+      if (isNaN(hb)) {
+        errors.push('HB harus berupa angka');
+      } else if (hb < 0) {
+        errors.push('HB tidak boleh negatif');
+      } else if (hb > 20) {
+        errors.push('HB tidak masuk akal (maksimal 20 g/dL)');
+      } else if (hb < 5) {
+        errors.push('HB terlalu rendah (minimal 5 g/dL)');
+      }
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+// ==========================================
+// 1. UPSERT MEASUREMENT (UPDATE dengan validasi)
 // ==========================================
 const upsertMeasurement = async (req, res, next) => {
   try {
@@ -204,7 +374,7 @@ const upsertMeasurement = async (req, res, next) => {
     if (role === 'meja1') {
       return res.status(403).json({
         success: false,
-        message: 'Meja 1 tidak memiliki akses untuk memasukkan data pemeriksaan. Silakan gunakan akun Meja 2 atau Meja 3.'
+        message: 'Meja 1 tidak memiliki akses untuk memasukkan data pemeriksaan.'
       });
     }
 
@@ -215,18 +385,55 @@ const upsertMeasurement = async (req, res, next) => {
     if (!checkup) {
       return res.status(404).json({
         success: false,
-        message: 'Sesi pemeriksaan tidak ditemukan. Pastikan nomor sesi pemeriksaan sudah benar.'
+        message: 'Sesi pemeriksaan tidak ditemukan.'
       });
     }
 
     const patientType = checkup.patient.patientType;
     const allowedData = filterAllowed(req.body, role, patientType);
 
-    // Cek apakah ada data yang diinput
+    // ✅ VALIDASI INPUT SEBELUM PROSES
+    const validation = validateMeasurementInput(allowedData, patientType);
+    if (!validation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Data tidak valid',
+        errors: validation.errors,
+        suggestion: 'Periksa kembali data yang Anda masukkan. ' + validation.errors.join('. ')
+      });
+    }
+
+    // Hitung umur otomatis untuk balita
+    if (patientType === 'balita' && checkup.patient.birthDate) {
+      const birthDate = new Date(checkup.patient.birthDate);
+      const sessionDate = new Date(checkup.session_date || checkup.sessionDate || new Date());
+      
+      if (!isNaN(birthDate.getTime()) && !isNaN(sessionDate.getTime())) {
+        const yearDiff = sessionDate.getFullYear() - birthDate.getFullYear();
+        const monthDiff = sessionDate.getMonth() - birthDate.getMonth();
+        const dayDiff = sessionDate.getDate() - birthDate.getDate();
+        
+        let totalMonths = yearDiff * 12 + monthDiff;
+        
+        if (dayDiff < 0) {
+          totalMonths--;
+        }
+        
+        // Force set ageMonths, tidak peduli role
+        allowedData.ageMonths = Math.max(0, totalMonths);
+        
+        console.log('✅ Umur balita dihitung otomatis:', {
+          birthDate: birthDate.toISOString().split('T')[0],
+          sessionDate: sessionDate.toISOString().split('T')[0],
+          ageMonths: allowedData.ageMonths
+        });
+      }
+    }
+
     if (Object.keys(allowedData).length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Tidak ada data yang valid untuk disimpan. Pastikan Anda mengisi field yang sesuai dengan hak akses Anda.'
+        message: 'Tidak ada data yang valid untuk disimpan.'
       });
     }
 
@@ -248,14 +455,9 @@ const upsertMeasurement = async (req, res, next) => {
       });
     }
 
-    // Reload untuk mendapatkan data terbaru
     await measurement.reload();
-
-    // Hitung Z-scores dan simpan
     await calculateAndSaveZScores(measurement, checkup);
     await measurement.save();
-
-    // Reload lagi setelah save untuk memastikan semua data tersimpan
     await measurement.reload();
 
     res.status(201).json({
@@ -263,9 +465,14 @@ const upsertMeasurement = async (req, res, next) => {
       message: 'Data pemeriksaan berhasil disimpan',
       data: measurement,
       calculationInfo: {
+        ageMonths: measurement.ageMonths,
         bmi: measurement.dataValues.bmi || measurement.dataValues.bmiPregnant,
-        zScore: measurement.dataValues.zScoreBMI || measurement.dataValues.zScoreBMIPregnant,
-        classification: measurement.dataValues.zClassification || measurement.dataValues.zClassificationPregnant,
+        zScore: patientType === 'balita' 
+          ? measurement.zScoreBMIU || measurement.dataValues.zScoreBMI 
+          : measurement.zScoreBMIPregnant || measurement.dataValues.zScoreBMIPregnant,
+        zScoreBMIU: measurement.zScoreBMIU,
+        zScoreBMIPregnant: measurement.zScoreBMIPregnant,
+        classification: measurement.statusGizi || measurement.dataValues.zClassification || measurement.dataValues.zClassificationPregnant,
         stuntingStatus: measurement.stuntingStatus
       }
     });
@@ -274,7 +481,7 @@ const upsertMeasurement = async (req, res, next) => {
     console.error('[upsertMeasurement Error]', err);
     next({
       statusCode: 500,
-      message: 'Terjadi kesalahan saat menyimpan data pemeriksaan. Silakan coba lagi atau hubungi administrator.',
+      message: 'Terjadi kesalahan saat menyimpan data pemeriksaan.',
       error: err.message
     });
   }
@@ -1111,6 +1318,7 @@ const getStuntingTrends = async (req, res, next) => {
 // EXPORT MODULES
 // ==========================================
 module.exports = {
+  validateMeasurementInput,
   upsertMeasurement,
   getMeasurementBySession,
   getMeasurementForEdit,

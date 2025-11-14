@@ -82,39 +82,39 @@ const Measurement = sequelize.define(
 
     // =================== LAB & EXAMS ===================
     proteinUrine: {
-      type: DataTypes.ENUM('ya', 'tidak'),
+      type: DataTypes.ENUM('positif', 'negatif'),
       allowNull: true,
       field: 'protein_urine',
     },
     reduksiUrine: {
-      type: DataTypes.ENUM('ya', 'tidak'),
+      type: DataTypes.ENUM('positif', 'negatif'),
       allowNull: true,
       field: 'reduksi_urine',
     },
     testHiv: {
-      type: DataTypes.ENUM('ya', 'tidak'),
+      type: DataTypes.ENUM('positif', 'negatif'),
       allowNull: true,
       field: 'test_hiv',
     },
     testSifilis: {
-      type: DataTypes.ENUM('ya', 'tidak'),
+      type: DataTypes.ENUM('positif', 'negatif'),
       allowNull: true,
       field: 'test_sifilis',
     },
     testHbsAg: {
-      type: DataTypes.ENUM('ya', 'tidak'),
+      type: DataTypes.ENUM('positif', 'negatif'),
       allowNull: true,
       field: 'test_hbsag',
     },
     gds: { type: DataTypes.FLOAT, allowNull: true },
     ancTerpadu: {
-      type: DataTypes.ENUM('ya', 'tidak'),
+      type: DataTypes.ENUM('sudah', 'belum'),
       allowNull: true,
       field: 'anc_terpadu',
     },
     HB: { type: DataTypes.FLOAT, allowNull: true, field: 'hb' },
     resiko: {
-      type: DataTypes.ENUM('tidak', 'kecil', 'sedang', 'tinggi'),
+      type: DataTypes.ENUM('kecil', 'sedang', 'tinggi'),
       allowNull: true,
       field: 'resiko',
     },

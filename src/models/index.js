@@ -70,7 +70,6 @@ const seedUsers = async () => {
         { username: 'meja1', role: 'meja1', nama_lengkap: 'Admin Meja 1' },
         { username: 'meja2', role: 'meja2', nama_lengkap: 'Operator Meja 2' },
         { username: 'meja3', role: 'meja3', nama_lengkap: 'Operator Meja 3' },
-        { username: 'meja4', role: 'meja4', nama_lengkap: 'Operator Meja 4' },
       ];
 
       for (const userData of defaultUsers) {

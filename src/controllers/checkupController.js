@@ -6,10 +6,37 @@ const { Op } = require('sequelize');
 // ==========================================
 const requiredFieldsByPatientType = (patientType) => {
   if (patientType === 'balita') {
-    return ['weightKg', 'heightCm', 'stuntingStatus'];
+    return [
+      'ageMonths',
+      'weightKg',
+      'heightCm',
+      'headCircCm',
+      'lilaCm',
+      'asi',
+      'vitaminA',
+      'statusGizi',
+      'stuntingStatus'
+    ];
   }
-  // ibu_hamil
-  return ['weightKgPregnant', 'heightCmPregnant', 'lilaCm'];
+  
+  return [
+    'ageMonthsPregnant',
+    'weightKgPregnant',
+    'heightCmPregnant',
+    'lilaCmPregnant',
+    'tekananDarah',
+    'proteinUrine',
+    'reduksiUrine',
+    'testHiv',
+    'testSifilis',
+    'testHbsAg',
+    'gds',
+    'ancTerpadu',
+    'HB',
+    'zScoreBMIPregnant',
+    'stuntingStatus',
+    'resiko'
+  ];
 };
 
 // ==========================================
@@ -18,11 +45,47 @@ const requiredFieldsByPatientType = (patientType) => {
 const checkMeasurementComplete = (measurements = [], patientType) => {
   const required = requiredFieldsByPatientType(patientType);
 
-  if (!measurements || measurements.length === 0) return false;
+  if (!measurements || measurements.length === 0) {
+    console.log('❌ Tidak ada measurements');
+    return false;
+  }
 
-  return measurements.some(m => {
-    return required.every(field => m[field] !== null && m[field] !== undefined);
+  // Ambil measurement pertama (biasanya hanya 1 measurement per session)
+  const measurement = measurements[0];
+
+  console.log('\n🔍 Checking measurement completeness:');
+  console.log('   Patient Type:', patientType);
+  console.log('   Required Fields:', required);
+
+  // Cek setiap field yang required
+  const missingFields = [];
+  const presentFields = [];
+
+  required.forEach(field => {
+    const value = measurement[field];
+    const isPresent = value !== null && value !== undefined && value !== '';
+    
+    if (isPresent) {
+      presentFields.push(field);
+      console.log(`   ✅ ${field}: ${value}`);
+    } else {
+      missingFields.push(field);
+      console.log(`   ❌ ${field}: kosong`);
+    }
   });
+
+  const isComplete = missingFields.length === 0;
+
+  console.log('\n📊 Summary:');
+  console.log(`   Total Required: ${required.length}`);
+  console.log(`   Present: ${presentFields.length}`);
+  console.log(`   Missing: ${missingFields.length}`);
+  if (missingFields.length > 0) {
+    console.log(`   Missing Fields: ${missingFields.join(', ')}`);
+  }
+  console.log(`   Result: ${isComplete ? '✅ LENGKAP' : '❌ BELUM LENGKAP'}\n`);
+
+  return isComplete;
 };
 
 // ==========================================
@@ -41,7 +104,6 @@ const getCheckupQueue = async (req, res, next) => {
     if (month && year) {
       const mm = String(month).padStart(2, '0');
       const startDate = `${year}-${mm}-01`;
-      // last day of month
       const endDay = new Date(year, month, 0).getDate();
       const endDate = `${year}-${mm}-${String(endDay).padStart(2, '0')}`;
       whereDate.session_date = { [Op.between]: [startDate, endDate] };
@@ -77,6 +139,8 @@ const getCheckupQueue = async (req, res, next) => {
 
     const data = rows.map((session, idx) => {
       const patient = session.patient;
+      
+      // ✅ Cek kelengkapan data berdasarkan tipe pasien
       const isComplete = checkMeasurementComplete(session.measurements, patient.patientType);
 
       let patientSummary = {
@@ -89,6 +153,8 @@ const getCheckupQueue = async (req, res, next) => {
 
       if (patient.patientType === 'balita') {
         patientSummary.motherName = patient.motherName || null;
+      } else if (patient.patientType === 'ibu_hamil') {
+        patientSummary.ageInYears = patient.ageInYears || null;
       }
 
       return {
@@ -96,7 +162,7 @@ const getCheckupQueue = async (req, res, next) => {
         id: session.id,
         sessionDate: session.session_date,
         completed: session.completed,
-        isDataComplete: isComplete, // false -> warna merah; true -> hijau
+        isDataComplete: isComplete, 
         patient: patientSummary,
         measurementCount: session.measurements ? session.measurements.length : 0,
         createdBy: session.created_by || null
@@ -115,12 +181,13 @@ const getCheckupQueue = async (req, res, next) => {
       data
     });
   } catch (err) {
-    next(err);  // Pass ke error handler
+    console.error('[getCheckupQueue Error]', err);
+    next(err);
   }
 };
 
 // ==========================================
-// MARK CHECKUP AS COMPLETED
+// MARK CHECKUP AS COMPLETED (Tidak digunakan lagi)
 // ==========================================
 const markCheckupCompleted = async (req, res, next) => {
   try {
@@ -136,7 +203,7 @@ const markCheckupCompleted = async (req, res, next) => {
     if (!session) {
       return res.status(404).json({
         success: false,
-        message: 'Checkup session not found'
+        message: 'Checkup session tidak ditemukan'
       });
     }
 
@@ -145,7 +212,8 @@ const markCheckupCompleted = async (req, res, next) => {
     if (!isComplete) {
       return res.status(400).json({
         success: false,
-        message: 'Cannot mark complete: measurements not complete',
+        message: 'Tidak dapat menandai selesai: data pemeriksaan belum lengkap',
+        suggestion: 'Pastikan semua field wajib sudah diisi',
         details: {
           patientType: session.patient.patientType,
           measurementCount: session.measurements ? session.measurements.length : 0,
@@ -160,7 +228,7 @@ const markCheckupCompleted = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Checkup marked as completed successfully',
+      message: 'Checkup berhasil ditandai sebagai selesai',
       data: {
         id: session.id,
         sessionDate: session.session_date,
@@ -170,7 +238,8 @@ const markCheckupCompleted = async (req, res, next) => {
       }
     });
   } catch (err) {
-    next(err);  // Pass ke error handler
+    console.error('[markCheckupCompleted Error]', err);
+    next(err);
   }
 };
 
@@ -185,7 +254,7 @@ const deleteCheckupSession = async (req, res, next) => {
     if (!session) {
       return res.status(404).json({
         success: false,
-        message: 'Checkup session not found'
+        message: 'Checkup session tidak ditemukan'
       });
     }
 
@@ -197,14 +266,15 @@ const deleteCheckupSession = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Checkup session deleted successfully',
+      message: 'Checkup session berhasil dihapus',
       data: {
         deleted_id: id,
         sessionDate: session.session_date
       }
     });
   } catch (err) {
-    next(err);  // Pass ke error handler
+    console.error('[deleteCheckupSession Error]', err);
+    next(err);
   }
 };
 

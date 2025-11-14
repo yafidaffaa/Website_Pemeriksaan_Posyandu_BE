@@ -423,8 +423,8 @@ function validateMeasurementData(data, patientType) {
     if (data.weight && (data.weight < 30 || data.weight > 150)) {
       errors.push('Berat badan ibu hamil tidak wajar (harus antara 30-150 kg)');
     }
-    if (data.height && (data.height < 140 || data.height > 200)) {
-      errors.push('Tinggi badan ibu hamil tidak wajar (harus antara 140-200 cm)');
+    if (data.height && (data.height < 130 || data.height > 200)) {
+      errors.push('Tinggi badan ibu hamil tidak wajar (harus antara 130-200 cm)');
     }
     // LILA optional tapi jika ada harus valid
     if (data.lila && (data.lila < 15 || data.lila > 40)) {
