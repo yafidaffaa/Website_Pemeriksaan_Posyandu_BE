@@ -114,9 +114,9 @@ const Measurement = sequelize.define(
     },
     HB: { type: DataTypes.FLOAT, allowNull: true, field: 'hb' },
     resiko: {
-      type: DataTypes.ENUM('kecil', 'sedang', 'tinggi'),
-      allowNull: true,
-      field: 'resiko',
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'resiko',
     },
   },
   {

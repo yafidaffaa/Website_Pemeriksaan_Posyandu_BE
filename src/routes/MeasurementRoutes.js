@@ -62,6 +62,19 @@ router.get(
 );
 
 // ==========================================
+// EXPORT PENERIMA MANFAAT (IBU HAMIL)
+// ==========================================
+// GET /api/measurement/export/penerima-manfaat?month=01&year=2024
+// Hanya Meja1 yang bisa export
+router.get(
+  '/export/penerima-manfaat',
+  authenticate,
+  authorize('meja1'),
+  validateDateFormat([]),
+  measurementController.exportPenerimaManfaat
+);
+
+// ==========================================
 // 2. GET MEASUREMENT FOR EDIT
 // ==========================================
 // GET /api/measurement/edit/:checkupSessionId

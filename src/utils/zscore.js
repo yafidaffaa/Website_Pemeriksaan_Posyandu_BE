@@ -293,7 +293,7 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
     if (bmi < PREGNANCY_BMI_REF.underweight) {
       zScore = -2.5;
       bmiClassification = 'Kurus (Underweight)';
-      nutritionStatus = 'Kurang Energi Kronis (KEK)';
+      nutritionStatus = 'KEK (Kurang Energi Kronis)';
     } else if (bmi <= PREGNANCY_BMI_REF.normal) {
       zScore = 0;
       bmiClassification = 'Normal';
@@ -301,11 +301,11 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
     } else if (bmi <= PREGNANCY_BMI_REF.overweight) {
       zScore = 1.5;
       bmiClassification = 'Kelebihan Berat Badan (Overweight)';
-      nutritionStatus = 'Berisiko Obesitas';
+      nutritionStatus = 'Resti (Resiko Tinggi)';
     } else {
       zScore = 3;
       bmiClassification = 'Obesitas';
-      nutritionStatus = 'Obesitas';
+      nutritionStatus = 'Resti (Resiko Tinggi)';
     }
 
     // Klasifikasi berdasarkan LILA (jika ada)
@@ -317,8 +317,8 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
         lilaStatus = 'KEK (LILA < 23.5 cm)';
         lilaRisk = 'Tinggi';
         // Override nutrition status jika LILA menunjukkan KEK
-        if (nutritionStatus !== 'Kurang Energi Kronis (KEK)') {
-          nutritionStatus = 'Kurang Energi Kronis (KEK) - LILA Rendah';
+        if (nutritionStatus !== 'KEK (Kurang Energi Kronis)') {
+          nutritionStatus = 'KEK (Kurang Energi Kronis)';
         }
       } else {
         lilaStatus = 'Normal (LILA ≥ 23.5 cm)';
