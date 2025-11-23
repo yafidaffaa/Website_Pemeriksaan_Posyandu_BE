@@ -2,14 +2,10 @@ const { User } = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// ==========================================
-// LOGIN
-// ==========================================
 const login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
 
-    // 🔹 Validasi input awal
     if (!username || !password) {
       return res.status(400).json({
         success: false,
@@ -31,7 +27,6 @@ const login = async (req, res, next) => {
       });
     }
 
-    // 🔹 Cari user berdasarkan username
     const user = await User.findOne({ where: { username } });
     if (!user) {
       return res.status(404).json({
@@ -40,7 +35,6 @@ const login = async (req, res, next) => {
       });
     }
 
-    // 🔹 Periksa apakah akun aktif
     if (!user.is_active) {
       return res.status(403).json({
         success: false,
@@ -48,7 +42,6 @@ const login = async (req, res, next) => {
       });
     }
 
-    // 🔹 Cek password
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       return res.status(401).json({
@@ -57,7 +50,6 @@ const login = async (req, res, next) => {
       });
     }
 
-    // 🔹 Buat token JWT
     const token = jwt.sign(
       {
         id: user.id,
@@ -69,7 +61,6 @@ const login = async (req, res, next) => {
       { expiresIn: '8h' }
     );
 
-    // 🔹 Kirim respons sukses
     return res.status(200).json({
       success: true,
       message: 'Login berhasil',
@@ -93,9 +84,6 @@ const login = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// LOGOUT
-// ==========================================
 const logout = async (req, res) => {
   return res.status(200).json({
     success: true,
@@ -103,9 +91,6 @@ const logout = async (req, res) => {
   });
 };
 
-// ==========================================
-// REFRESH TOKEN
-// ==========================================
 const refreshToken = async (req, res, next) => {
   try {
     const user = req.user;

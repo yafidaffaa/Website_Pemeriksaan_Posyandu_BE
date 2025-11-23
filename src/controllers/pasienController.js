@@ -1,7 +1,6 @@
 const { Pasien, CheckupSession } = require('../models');
 const { Op } = require('sequelize');
 
-// Fungsi bantu menghitung umur minggu/tahun
 const hitungUmurMinggu = (birthDate) => {
   const today = new Date();
   const bdate = new Date(birthDate);
@@ -18,17 +17,12 @@ const hitungUmurTahun = (birthDate) => {
   return age;
 };
 
-// ==========================================
-// FUNGSI VALIDASI LENGKAP
-// ==========================================
 const validatePatientData = (data, patientType, isUpdate = false) => {
   const errors = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Validasi untuk BALITA
   if (patientType === 'balita') {
-    // Nama anak
     if (!isUpdate || data.name !== undefined) {
       if (!data.name || !data.name.trim()) {
         errors.push('Nama anak wajib diisi');
@@ -39,7 +33,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Nama ibu
     if (!isUpdate || data.motherName !== undefined) {
       if (!data.motherName || !data.motherName.trim()) {
         errors.push('Nama ibu wajib diisi');
@@ -50,7 +43,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Gender
     if (!isUpdate || data.gender !== undefined) {
       if (!data.gender) {
         errors.push('Jenis kelamin wajib dipilih');
@@ -59,7 +51,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // RT
     if (!isUpdate || data.rt !== undefined) {
       if (!data.rt || !data.rt.trim()) {
         errors.push('RT wajib diisi');
@@ -74,7 +65,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Tanggal lahir
     if (!isUpdate || data.birthDate !== undefined) {
       if (!data.birthDate) {
         errors.push('Tanggal lahir wajib diisi');
@@ -90,7 +80,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // PUS
     if (!isUpdate || data.pus !== undefined) {
       if (!data.pus) {
         errors.push('PUS wajib dipilih');
@@ -99,7 +88,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // WUS
     if (!isUpdate || data.wus !== undefined) {
       if (!data.wus) {
         errors.push('WUS wajib dipilih');
@@ -109,9 +97,7 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
     }
   }
 
-  // Validasi untuk IBU HAMIL
   if (patientType === 'ibu_hamil') {
-    // Nama ibu
     if (!isUpdate || data.name !== undefined) {
       if (!data.name || !data.name.trim()) {
         errors.push('Nama ibu wajib diisi');
@@ -122,7 +108,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Nama suami
     if (!isUpdate || data.namaSuami !== undefined) {
       if (!data.namaSuami || !data.namaSuami.trim()) {
         errors.push('Nama suami wajib diisi');
@@ -133,7 +118,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // NIK
     if (!isUpdate || data.nik !== undefined) {
       if (!data.nik || !data.nik.trim()) {
         errors.push('NIK wajib diisi');
@@ -144,7 +128,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // No KK
     if (!isUpdate || data.noKK !== undefined) {
       if (!data.noKK || !data.noKK.trim()) {
         errors.push('No KK wajib diisi');
@@ -155,7 +138,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // RT
     if (!isUpdate || data.rt !== undefined) {
       if (!data.rt || !data.rt.trim()) {
         errors.push('RT wajib diisi');
@@ -170,7 +152,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Tanggal lahir
     if (!isUpdate || data.birthDate !== undefined) {
       if (!data.birthDate) {
         errors.push('Tanggal lahir wajib diisi');
@@ -187,7 +168,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Gravida
     if (!isUpdate || data.gravida !== undefined) {
       if (data.gravida === undefined || data.gravida === null || data.gravida === '') {
         errors.push('Gravida wajib diisi');
@@ -202,7 +182,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Partus
     if (!isUpdate || data.partus !== undefined) {
       if (data.partus === undefined || data.partus === null || data.partus === '') {
         errors.push('Partus wajib diisi');
@@ -217,7 +196,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Abortus
     if (!isUpdate || data.abortus !== undefined) {
       if (data.abortus === undefined || data.abortus === null || data.abortus === '') {
         errors.push('Abortus wajib diisi');
@@ -232,7 +210,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Jarak persalinan sebelumnya
     if (!isUpdate || data.jarakPersalinanSebelumnya !== undefined) {
       if (data.jarakPersalinanSebelumnya === undefined || data.jarakPersalinanSebelumnya === null || data.jarakPersalinanSebelumnya === '') {
         errors.push('Jarak persalinan sebelumnya wajib diisi');
@@ -247,7 +224,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Usia kandungan
     if (!isUpdate || data.usiaKandunganMinggu !== undefined) {
       if (data.usiaKandunganMinggu === undefined || data.usiaKandunganMinggu === null || data.usiaKandunganMinggu === '') {
         errors.push('Usia kandungan wajib diisi');
@@ -262,7 +238,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Tanggal pemeriksaan pertama
     if (!isUpdate || data.tglPemeriksaanPertama !== undefined) {
       if (!data.tglPemeriksaanPertama) {
         errors.push('Tanggal pemeriksaan pertama wajib diisi');
@@ -276,7 +251,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // HPM
     if (!isUpdate || data.hpm !== undefined) {
       if (!data.hpm) {
         errors.push('HPM wajib diisi');
@@ -290,7 +264,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // HPL
     if (!isUpdate || data.hpl !== undefined) {
       if (!data.hpl) {
         errors.push('HPL wajib diisi');
@@ -307,7 +280,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Golongan darah
     if (!isUpdate || data.golonganDarah !== undefined) {
       if (!data.golonganDarah) {
         errors.push('Golongan darah wajib dipilih');
@@ -316,14 +288,12 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
       }
     }
 
-    // Nomor jaminan (opsional)
     if (data.nomorJaminan && data.nomorJaminan.trim()) {
       if (!/^\d{9,11}$/.test(data.nomorJaminan)) {
         errors.push('Nomor jaminan harus 9-11 digit angka');
       }
     }
 
-    // No telepon
     if (!isUpdate || data.noTelp !== undefined) {
       if (!data.noTelp || !data.noTelp.trim()) {
         errors.push('No telepon wajib diisi');
@@ -336,9 +306,6 @@ const validatePatientData = (data, patientType, isUpdate = false) => {
   return errors;
 };
 
-// ==========================================
-// CREATE PASIEN
-// ==========================================
 const createPasien = async (req, res, next) => {
   try {
     const { patientType } = req.body;
@@ -357,7 +324,6 @@ const createPasien = async (req, res, next) => {
       });
     }
 
-    // Validasi menggunakan fungsi baru
     const validationErrors = validatePatientData(req.body, patientType, false);
     
     if (validationErrors.length > 0) {
@@ -383,10 +349,8 @@ const createPasien = async (req, res, next) => {
       if (req.body[key] !== undefined) data[key] = req.body[key];
     }
 
-    // Otomatis gender untuk ibu hamil
     if (patientType === 'ibu_hamil') data.gender = 'P';
 
-    // Hitung umur
     if (req.body.birthDate) {
       if (patientType === 'balita') data.ageInWeeks = hitungUmurMinggu(req.body.birthDate);
       if (patientType === 'ibu_hamil') data.ageInYears = hitungUmurTahun(req.body.birthDate);
@@ -406,7 +370,6 @@ const createPasien = async (req, res, next) => {
       });
     }
 
-    // Buat checkup session
     const checkupSession = await CheckupSession.create({
       patientId: pasien.id,
       sessionDate: today,
@@ -414,7 +377,6 @@ const createPasien = async (req, res, next) => {
       createdById: req.user.id
     });
 
-    // Buat measurement kosong untuk session ini
     const { Measurement } = require('../models');
     await Measurement.create({
       checkupSessionId: checkupSession.id,
@@ -432,9 +394,6 @@ const createPasien = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// UPDATE PASIEN
-// ==========================================
 const updatePasien = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -449,7 +408,6 @@ const updatePasien = async (req, res, next) => {
 
     const { patientType } = pasien;
 
-    // Validasi menggunakan fungsi baru
     const validationErrors = validatePatientData(req.body, patientType, true);
     
     if (validationErrors.length > 0) {
@@ -474,13 +432,11 @@ const updatePasien = async (req, res, next) => {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     }
 
-    // Perbarui umur jika birthDate berubah
     if (req.body.birthDate) {
       if (patientType === 'balita') updates.ageInWeeks = hitungUmurMinggu(req.body.birthDate);
       if (patientType === 'ibu_hamil') updates.ageInYears = hitungUmurTahun(req.body.birthDate);
     }
 
-    // Gender otomatis 'P' untuk ibu hamil
     if (patientType === 'ibu_hamil') updates.gender = 'P';
 
     await pasien.update(updates);
@@ -495,9 +451,6 @@ const updatePasien = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// GET ALL PASIEN
-// ==========================================
 const getAllPasien = async (req, res, next) => {
   try {
     const { patientType, name, page = 1, limit = 10 } = req.query;
@@ -544,9 +497,6 @@ const getAllPasien = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// GET PASIEN BY ID
-// ==========================================
 const getPasienById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -578,9 +528,6 @@ const getPasienById = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// DELETE PASIEN
-// ==========================================
 const deletePasien = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -604,9 +551,6 @@ const deletePasien = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// ADD PASIEN TO QUEUE
-// ==========================================
 const addPasienToQueue = async (req, res, next) => {
   try {
     const { pasienId, tanggal } = req.body;
@@ -621,18 +565,15 @@ const addPasienToQueue = async (req, res, next) => {
 
     const sessionDate = tanggal || new Date().toISOString().slice(0, 10);
     
-    // Parse tanggal untuk mendapatkan bulan dan tahun
     const date = new Date(sessionDate);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     
-    // Hitung tanggal awal dan akhir bulan
     const monthStr = String(month).padStart(2, '0');
     const startOfMonth = `${year}-${monthStr}-01`;
     const endDay = new Date(year, month, 0).getDate();
     const endOfMonth = `${year}-${monthStr}-${String(endDay).padStart(2, '0')}`;
 
-    // Cek apakah pasien sudah ada di antrian di bulan dan tahun yang sama
     const existingInMonth = await CheckupSession.findOne({
       where: { 
         patientId: pasienId,
@@ -654,7 +595,6 @@ const addPasienToQueue = async (req, res, next) => {
       });
     }
 
-    // Buat checkup session
     const checkupSession = await CheckupSession.create({
       patientId: pasienId,
       sessionDate: sessionDate,
@@ -662,7 +602,6 @@ const addPasienToQueue = async (req, res, next) => {
       createdById: req.user.id
     });
 
-    // Buat measurement kosong untuk session ini
     const { Measurement } = require('../models');
     await Measurement.create({
       checkupSessionId: checkupSession.id,
@@ -687,9 +626,6 @@ const addPasienToQueue = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// GET STATISTIK PASIEN
-// ==========================================
 const getStatistikPasien = async (req, res) => {
   try {
     const jumlahBalita = await Pasien.count({ where: { patientType: 'balita' } });

@@ -1,15 +1,12 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 
-// ==========================================
-// RATE LIMITER UNTUK LOGIN
-// ==========================================
 const loginAttempts = new Map();
 
 const loginRateLimit = (req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress;
   const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 menit
+  const windowMs = 15 * 60 * 1000;
   const maxAttempts = 100;
 
   if (!loginAttempts.has(ip)) {
@@ -19,13 +16,11 @@ const loginRateLimit = (req, res, next) => {
 
   const record = loginAttempts.get(ip);
 
-  // Reset jika sudah lewat window time
   if (now - record.firstAttempt > windowMs) {
     loginAttempts.set(ip, { count: 1, firstAttempt: now });
     return next();
   }
 
-  // Cek jumlah attempt
   if (record.count >= maxAttempts) {
     const timeLeft = Math.ceil((windowMs - (now - record.firstAttempt)) / 1000 / 60);
     return res.status(429).json({ 
@@ -39,9 +34,6 @@ const loginRateLimit = (req, res, next) => {
   next();
 };
 
-// ==========================================
-// 1. AUTHENTICATE - Verifikasi JWT Token
-// ==========================================
 const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -62,10 +54,8 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Get user dari database untuk validasi is_active
     const user = await User.findByPk(decoded.id, {
       attributes: ['id', 'username', 'role', 'nama_lengkap', 'is_active']
     });
@@ -84,7 +74,6 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    // Attach user data ke request
     req.user = {
       id: user.id,
       username: user.username,
@@ -114,9 +103,6 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// 2. AUTHORIZE - Cek Role
-// ==========================================
 const authorize = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
@@ -137,9 +123,6 @@ const authorize = (...allowedRoles) => {
   };
 };
 
-// ==========================================
-// 3. ONLY MEJA1 - Shortcut untuk Meja1
-// ==========================================
 const onlyMeja1 = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ 
@@ -157,9 +140,6 @@ const onlyMeja1 = (req, res, next) => {
   next();
 };
 
-// ==========================================
-// 4. ONLY OPERATOR (Meja2-5) - Input Measurement
-// ==========================================
 const onlyOperator = (req, res, next) => {
   const operatorRoles = ['meja2', 'meja3', 'meja4', 'meja5'];
   
@@ -179,9 +159,6 @@ const onlyOperator = (req, res, next) => {
   next();
 };
 
-// ==========================================
-// 5. OPTIONAL AUTH - Endpoint dengan/tanpa login
-// ==========================================
 const optionalAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -221,9 +198,6 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// EXPORT SEMUA MIDDLEWARE
-// ==========================================
 module.exports = {
   loginRateLimit,
   authenticate,

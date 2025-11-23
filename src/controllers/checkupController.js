@@ -1,9 +1,6 @@
 const { CheckupSession, Measurement, Pasien, User } = require('../models');
 const { Op } = require('sequelize');
 
-// ==========================================
-// HELPER: Tentukan required fields per patientType
-// ==========================================
 const requiredFieldsByPatientType = (patientType) => {
   if (patientType === 'balita') {
     return [
@@ -39,9 +36,6 @@ const requiredFieldsByPatientType = (patientType) => {
   ];
 };
 
-// ==========================================
-// HELPER: Cek apakah measurements lengkap
-// ==========================================
 const checkMeasurementComplete = (measurements = [], patientType) => {
   const required = requiredFieldsByPatientType(patientType);
 
@@ -50,14 +44,12 @@ const checkMeasurementComplete = (measurements = [], patientType) => {
     return false;
   }
 
-  // Ambil measurement pertama (biasanya hanya 1 measurement per session)
   const measurement = measurements[0];
 
   console.log('\n🔍 Checking measurement completeness:');
   console.log('   Patient Type:', patientType);
   console.log('   Required Fields:', required);
 
-  // Cek setiap field yang required
   const missingFields = [];
   const presentFields = [];
 
@@ -88,9 +80,6 @@ const checkMeasurementComplete = (measurements = [], patientType) => {
   return isComplete;
 };
 
-// ==========================================
-// GET CHECKUP QUEUE
-// ==========================================
 const getCheckupQueue = async (req, res, next) => {
   try {
     let { month, year, patientType = 'ibu_hamil', page = 1, limit = 50 } = req.query;
@@ -99,7 +88,6 @@ const getCheckupQueue = async (req, res, next) => {
     limit = parseInt(limit) || 50;
     const offset = (page - 1) * limit;
 
-    // Build date filter based on session_date
     const whereDate = {};
     if (month && year) {
       const mm = String(month).padStart(2, '0');
@@ -111,7 +99,6 @@ const getCheckupQueue = async (req, res, next) => {
       whereDate.session_date = { [Op.between]: [`${year}-01-01`, `${year}-12-31`] };
     }
 
-    // Query CheckupSession with patient and measurements included
     const { count, rows } = await CheckupSession.findAndCountAll({
       where: whereDate,
       include: [
@@ -140,7 +127,6 @@ const getCheckupQueue = async (req, res, next) => {
     const data = rows.map((session, idx) => {
       const patient = session.patient;
       
-      // ✅ Cek kelengkapan data berdasarkan tipe pasien
       const isComplete = checkMeasurementComplete(session.measurements, patient.patientType);
 
       let patientSummary = {
@@ -186,9 +172,6 @@ const getCheckupQueue = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// MARK CHECKUP AS COMPLETED (Tidak digunakan lagi)
-// ==========================================
 const markCheckupCompleted = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -207,7 +190,6 @@ const markCheckupCompleted = async (req, res, next) => {
       });
     }
 
-    // Cek kelengkapan measurements
     const isComplete = checkMeasurementComplete(session.measurements, session.patient.patientType);
     if (!isComplete) {
       return res.status(400).json({
@@ -222,7 +204,6 @@ const markCheckupCompleted = async (req, res, next) => {
       });
     }
 
-    // Mark as completed
     session.completed = true;
     await session.save();
 
@@ -243,9 +224,6 @@ const markCheckupCompleted = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// DELETE CHECKUP SESSION
-// ==========================================
 const deleteCheckupSession = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -258,10 +236,8 @@ const deleteCheckupSession = async (req, res, next) => {
       });
     }
 
-    // Hapus semua measurement terkait dulu
     await Measurement.destroy({ where: { checkup_session_id: id } });
 
-    // Hapus session
     await session.destroy();
 
     res.status(200).json({

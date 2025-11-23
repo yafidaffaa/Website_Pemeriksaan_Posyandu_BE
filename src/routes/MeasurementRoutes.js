@@ -12,11 +12,6 @@ const {
 
 // ==================== MEASUREMENT ROUTES ====================
 
-// ==========================================
-// 8. GET STUNTING STATISTICS (PIE CHART)
-// ==========================================
-// GET /api/measurement/statistics/stunting?patientType=balita
-// Semua meja bisa akses untuk dashboard
 router.get(
   '/statistics/stunting',
   authenticate,
@@ -24,11 +19,6 @@ router.get(
   measurementController.getStuntingStatistics
 );
 
-// ==========================================
-// 9. GET STUNTING TRENDS (BAR CHART)
-// ==========================================
-// GET /api/measurement/statistics/trends?month=1&year=2025
-// Semua meja bisa akses untuk dashboard
 router.get(
   '/statistics/trends',
   authenticate,
@@ -36,11 +26,6 @@ router.get(
   measurementController.getStuntingTrends
 );
 
-// ==========================================
-// 6. EXPORT KELURAHAN
-// ==========================================
-// GET /api/measurement/export/kelurahan?month=01&year=2024&patientType=balita
-// Hanya Meja1 yang bisa export
 router.get(
   '/export/kelurahan',
   authenticate,
@@ -49,11 +34,6 @@ router.get(
   measurementController.exportKelurahan
 );
 
-// ==========================================
-// 7. EXPORT PUSKESMAS
-// ==========================================
-// GET /api/measurement/export/puskesmas?month=01&year=2024&patientType=ibu_hamil
-// Hanya Meja1 yang bisa export
 router.get(
   '/export/puskesmas',
   authenticate,
@@ -61,11 +41,6 @@ router.get(
   measurementController.exportPuskesmas
 );
 
-// ==========================================
-// EXPORT PENERIMA MANFAAT (IBU HAMIL)
-// ==========================================
-// GET /api/measurement/export/penerima-manfaat?month=01&year=2024
-// Hanya Meja1 yang bisa export
 router.get(
   '/export/penerima-manfaat',
   authenticate,
@@ -74,11 +49,6 @@ router.get(
   measurementController.exportPenerimaManfaat
 );
 
-// ==========================================
-// 2. GET MEASUREMENT FOR EDIT
-// ==========================================
-// GET /api/measurement/edit/:checkupSessionId
-// Hanya Meja2-3 yang bisa edit form
 router.get(
   '/edit/:checkupSessionId',
   authenticate,
@@ -86,11 +56,6 @@ router.get(
   measurementController.getMeasurementForEdit
 );
 
-// ==========================================
-// 3. GET MEASUREMENT BY SESSION
-// ==========================================
-// GET /api/measurement/session/:checkupSessionId
-// Semua meja bisa lihat measurement
 router.get(
   '/session/:checkupSessionId',
   authenticate,
@@ -98,11 +63,6 @@ router.get(
   measurementController.getMeasurementBySession
 );
 
-// ==========================================
-// 4. GET ALL MEASUREMENTS (LIST)
-// ==========================================
-// GET /api/measurement?month=01&year=2024&patientType=balita&page=1&limit=50
-// Hanya Meja1 yang bisa lihat list semua measurement
 router.get(
   '/',
   authenticate,
@@ -110,11 +70,6 @@ router.get(
   measurementController.getAllMeasurements
 );
 
-// ==========================================
-// 5. GET MEASUREMENT BY ID
-// ==========================================
-// GET /api/measurement/:id
-// Hanya Meja1 yang bisa lihat detail measurement
 router.get(
   '/:id',
   authenticate,
@@ -122,11 +77,6 @@ router.get(
   measurementController.getMeasurementById
 );
 
-// ==========================================
-// 1. UPSERT MEASUREMENT (CREATE/UPDATE)
-// ==========================================
-// POST /api/measurement/:checkupSessionId
-// Hanya Meja2-3 yang bisa input measurement
 router.post(
   '/:checkupSessionId',
   authenticate,

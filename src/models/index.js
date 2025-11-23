@@ -2,15 +2,11 @@ const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 const bcrypt = require('bcryptjs');
 
-// Import models
 const User = require('./User');
 const Pasien = require('./pasien');
 const { CheckupSession } = require('./CheckupSession');
 const { Measurement } = require('./Measurement');
 
-// ========== DEFINISI RELASI ==========
-
-// User Relations
 User.hasMany(CheckupSession, {
   foreignKey: 'created_by_id',
   as: 'checkup_sessions_created'
@@ -38,7 +34,6 @@ Measurement.belongsTo(User, {
   as: 'updated_by'
 });
 
-// Pasien Relations
 Pasien.hasMany(CheckupSession, {
   foreignKey: 'patient_id',
   as: 'checkup_sessions'
@@ -48,7 +43,6 @@ CheckupSession.belongsTo(Pasien, {
   as: 'patient'
 });
 
-// CheckupSession Relations
 CheckupSession.hasMany(Measurement, {
   foreignKey: 'checkup_session_id',
   as: 'measurements'
@@ -58,13 +52,10 @@ Measurement.belongsTo(CheckupSession, {
   as: 'checkup_session'
 });
 
-// ========== SEEDER FUNCTION ==========
-
 const seedUsers = async () => {
   try {
     const userCount = await User.count();
 
-    // hanya buat user default jika tabel masih kosong
     if (userCount === 0) {
       const defaultUsers = [
         { username: 'meja1', role: 'meja1', nama_lengkap: 'Admin Meja 1' },
@@ -88,8 +79,6 @@ const seedUsers = async () => {
     console.error('❌ Error seeding users:', error.message);
   }
 };
-
-// ========== SYNC DATABASE ==========
 
 sequelize.sync({ alter: true })
   .then(async () => {

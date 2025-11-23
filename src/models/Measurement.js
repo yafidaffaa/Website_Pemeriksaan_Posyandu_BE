@@ -1,14 +1,12 @@
-// models/Measurement.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
-const zscore = require('../utils/zscore'); // helper untuk perhitungan Z-score
+const zscore = require('../utils/zscore');
 
 const Measurement = sequelize.define(
   'Measurement',
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
 
-    // Relasi
     checkupSessionId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -76,7 +74,7 @@ const Measurement = sequelize.define(
       allowNull: true,
       field: 'tekanan_darah',
       validate: {
-        is: /^[0-9/]+$/i, // hanya angka dan tanda "/"
+        is: /^[0-9/]+$/i,
       },
     },
 

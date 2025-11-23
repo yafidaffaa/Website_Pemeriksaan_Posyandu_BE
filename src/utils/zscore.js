@@ -103,9 +103,6 @@ const PREGNANCY_LILA_REF = {
   normal: 23.5 // LILA >= 23.5 cm = Normal
 };
 
-/**
- * Interpolasi linear untuk mendapatkan nilai referensi di umur tertentu
- */
 function interpolateReference(refData, ageMonths) {
   if (ageMonths <= refData[0].month) {
     return refData[0];
@@ -132,9 +129,6 @@ function interpolateReference(refData, ageMonths) {
   return refData[refData.length - 1];
 }
 
-/**
- * Hitung Z-score balita (BB/U, TB/U, IMT/U)
- */
 function calculateChildZScore({ ageMonths, weight, height, gender }) {
   try {
     if (!weight || !height || weight <= 0 || height <= 0) {
@@ -271,7 +265,6 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
       };
     }
 
-    // Hitung BMI
     const bmi = weight / Math.pow(height / 100, 2);
     if (isNaN(bmi) || bmi <= 0) {
       return {
@@ -285,7 +278,6 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
       };
     }
 
-    // Klasifikasi berdasarkan BMI
     let zScore = 0;
     let bmiClassification = 'Normal';
     let nutritionStatus = 'Normal';
@@ -308,7 +300,6 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
       nutritionStatus = 'Resti (Resiko Tinggi)';
     }
 
-    // Klasifikasi berdasarkan LILA (jika ada)
     let lilaStatus = null;
     let lilaRisk = null;
     
@@ -316,7 +307,6 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
       if (lila < PREGNANCY_LILA_REF.kek) {
         lilaStatus = 'KEK (LILA < 23.5 cm)';
         lilaRisk = 'Tinggi';
-        // Override nutrition status jika LILA menunjukkan KEK
         if (nutritionStatus !== 'KEK (Kurang Energi Kronis)') {
           nutritionStatus = 'KEK (Kurang Energi Kronis)';
         }
@@ -326,31 +316,25 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
       }
     }
 
-    // Tentukan risiko stunting pada bayi
     let stuntingRisk = 'Rendah';
     let stuntingRiskDetail = '';
     
-    // Risiko TINGGI jika:
     if (bmi < PREGNANCY_BMI_REF.underweight || (lila && lila < PREGNANCY_LILA_REF.kek)) {
       stuntingRisk = 'Tinggi';
       stuntingRiskDetail = 'Ibu dengan KEK berisiko tinggi melahirkan bayi stunting';
     }
-    // Risiko SEDANG jika:
     else if (bmi > PREGNANCY_BMI_REF.overweight) {
       stuntingRisk = 'Sedang';
       stuntingRiskDetail = 'Obesitas dapat meningkatkan risiko komplikasi kehamilan';
     }
-    // Risiko RENDAH jika normal
     else {
       stuntingRisk = 'Rendah';
       stuntingRiskDetail = 'Status gizi ibu baik, risiko stunting rendah';
     }
 
-    // Pertimbangan usia kehamilan
     if (ageMonthsPregnant && ageMonthsPregnant > 0) {
       const trimester = ageMonthsPregnant <= 3 ? 1 : ageMonthsPregnant <= 6 ? 2 : 3;
       
-      // KEK di trimester 1-2 lebih berisiko
       if ((bmi < PREGNANCY_BMI_REF.underweight || (lila && lila < PREGNANCY_LILA_REF.kek)) && trimester <= 2) {
         stuntingRisk = 'Sangat Tinggi';
         stuntingRiskDetail = `KEK di Trimester ${trimester} - Perlu Intervensi Segera`;
@@ -391,9 +375,6 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
   }
 }
 
-/**
- * Validasi data pengukuran sebelum perhitungan
- */
 function validateMeasurementData(data, patientType) {
   const errors = [];
 
@@ -426,7 +407,6 @@ function validateMeasurementData(data, patientType) {
     if (data.height && (data.height < 130 || data.height > 200)) {
       errors.push('Tinggi badan ibu hamil tidak wajar (harus antara 130-200 cm)');
     }
-    // LILA optional tapi jika ada harus valid
     if (data.lila && (data.lila < 15 || data.lila > 40)) {
       errors.push('LILA tidak wajar (harus antara 15-40 cm)');
     }

@@ -1,14 +1,10 @@
 /**
  * ========== MIDDLEWARE COLLECTION ==========
- * Kumpulan middleware untuk validasi, autentikasi, dan error handling
  */
 
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 
-// ==========================================
-// 1. VALIDASI REQUEST BODY
-// ==========================================
 const validateBody = (requiredFields = []) => {
   return (req, res, next) => {
     const missingFields = requiredFields.filter(
@@ -28,9 +24,6 @@ const validateBody = (requiredFields = []) => {
   };
 };
 
-// ==========================================
-// 2. VALIDASI PATIENT TYPE
-// ==========================================
 const validatePasienType = (req, res, next) => {
   const { patientType } = req.body;
   
@@ -46,9 +39,6 @@ const validatePasienType = (req, res, next) => {
   return next();
 };
 
-// ==========================================
-// 3. VALIDASI FORMAT TANGGAL
-// ==========================================
 const validateDateFormat = (dateFields = []) => {
   return (req, res, next) => {
     const invalidDates = [];
@@ -59,13 +49,11 @@ const validateDateFormat = (dateFields = []) => {
       if (dateValue) {
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         
-        // Cek format
         if (!dateRegex.test(dateValue)) {
           invalidDates.push(`${field} (format harus YYYY-MM-DD, contoh: 2024-01-15)`);
           continue;
         }
 
-        // Cek validitas tanggal
         const date = new Date(dateValue);
         if (isNaN(date.getTime())) {
           invalidDates.push(`${field} (tanggal tidak valid)`);
@@ -87,14 +75,10 @@ const validateDateFormat = (dateFields = []) => {
   };
 };
 
-// ==========================================
-// 4. VALIDASI QUERY PARAMS (untuk filter)
-// ==========================================
 const validateQueryParams = (req, res, next) => {
   try {
     const { month, year, page, limit } = req.query;
 
-    // Validasi month
     if (month !== undefined) {
       const monthNum = parseInt(month);
       if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
@@ -107,7 +91,6 @@ const validateQueryParams = (req, res, next) => {
       }
     }
 
-    // Validasi year
     if (year !== undefined) {
       const yearNum = parseInt(year);
       if (isNaN(yearNum) || yearNum < 2000 || yearNum > 2100) {
@@ -120,7 +103,6 @@ const validateQueryParams = (req, res, next) => {
       }
     }
 
-    // Validasi page
     if (page !== undefined) {
       const pageNum = parseInt(page);
       if (isNaN(pageNum) || pageNum < 1) {
@@ -133,7 +115,6 @@ const validateQueryParams = (req, res, next) => {
       }
     }
 
-    // Validasi limit
     if (limit !== undefined) {
       const limitNum = parseInt(limit);
       if (isNaN(limitNum) || limitNum < 1 || limitNum > 1000) {
@@ -152,9 +133,6 @@ const validateQueryParams = (req, res, next) => {
   }
 };
 
-// ==========================================
-// 5. VALIDASI INPUT MEASUREMENT
-// ==========================================
 const validateMeasurementInput = (req, res, next) => {
   try {
     const { 
@@ -174,7 +152,6 @@ const validateMeasurementInput = (req, res, next) => {
 
     const errors = [];
 
-    // Validasi berat badan balita
     if (weightKg !== undefined && weightKg !== null && weightKg !== '') {
       const weight = parseFloat(weightKg);
       if (isNaN(weight)) {
@@ -186,7 +163,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi tinggi badan balita
     if (heightCm !== undefined && heightCm !== null && heightCm !== '') {
       const height = parseFloat(heightCm);
       if (isNaN(height)) {
@@ -198,7 +174,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi umur balita
     if (ageMonths !== undefined && ageMonths !== null && ageMonths !== '') {
       const age = parseFloat(ageMonths);
       if (isNaN(age)) {
@@ -210,7 +185,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi berat badan ibu hamil
     if (weightKgPregnant !== undefined && weightKgPregnant !== null && weightKgPregnant !== '') {
       const weight = parseFloat(weightKgPregnant);
       if (isNaN(weight)) {
@@ -222,7 +196,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi tinggi badan ibu hamil
     if (heightCmPregnant !== undefined && heightCmPregnant !== null && heightCmPregnant !== '') {
       const height = parseFloat(heightCmPregnant);
       if (isNaN(height)) {
@@ -234,7 +207,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi usia kehamilan
     if (ageMonthsPregnant !== undefined && ageMonthsPregnant !== null && ageMonthsPregnant !== '') {
       const age = parseFloat(ageMonthsPregnant);
       if (isNaN(age)) {
@@ -246,7 +218,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi lingkar kepala
     if (headCircCm !== undefined && headCircCm !== null && headCircCm !== '') {
       const head = parseFloat(headCircCm);
       if (isNaN(head)) {
@@ -256,7 +227,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi LILA balita
     if (lilaCm !== undefined && lilaCm !== null && lilaCm !== '') {
       const lila = parseFloat(lilaCm);
       if (isNaN(lila)) {
@@ -266,7 +236,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi LILA ibu hamil
     if (lilaCmPregnant !== undefined && lilaCmPregnant !== null && lilaCmPregnant !== '') {
       const lila = parseFloat(lilaCmPregnant);
       if (isNaN(lila)) {
@@ -276,7 +245,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi tekanan darah
     if (tekananDarah !== undefined && tekananDarah !== null && tekananDarah !== '') {
       const tdRegex = /^\d{2,3}\/\d{2,3}$/;
       if (!tdRegex.test(tekananDarah)) {
@@ -284,7 +252,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi HB
     if (HB !== undefined && HB !== null && HB !== '') {
       const hb = parseFloat(HB);
       if (isNaN(hb)) {
@@ -294,7 +261,6 @@ const validateMeasurementInput = (req, res, next) => {
       }
     }
 
-    // Validasi GDS
     if (gds !== undefined && gds !== null && gds !== '') {
       const gdsVal = parseFloat(gds);
       if (isNaN(gdsVal)) {
@@ -320,9 +286,6 @@ const validateMeasurementInput = (req, res, next) => {
   }
 };
 
-// ==========================================
-// 6. VALIDASI JWT TOKEN
-// ==========================================
 const validateToken = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -373,11 +336,7 @@ const validateToken = (req, res, next) => {
   }
 };
 
-// ==========================================
-// 7. GLOBAL ERROR HANDLER
-// ==========================================
 const errorHandler = (err, req, res, next) => {
-  // Log error untuk debugging
   console.error('🔥 Error Handler:', {
     message: err.message,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
@@ -388,20 +347,15 @@ const errorHandler = (err, req, res, next) => {
     timestamp: new Date().toISOString()
   });
 
-  // Jika response sudah dikirim, skip
   if (res.headersSent) {
     return next(err);
   }
 
-  // Default values
   let statusCode = err.statusCode || err.status || 500;
   let message = err.message || 'Terjadi kesalahan pada server';
   let errorCode = err.code || 'INTERNAL_SERVER_ERROR';
   let suggestion = 'Silakan coba lagi atau hubungi administrator jika masalah berlanjut.';
-
-  // ========== SEQUELIZE ERRORS ==========
   
-  // Validation Error
   if (err.name === 'SequelizeValidationError') {
     statusCode = 400;
     errorCode = 'VALIDATION_ERROR';
@@ -421,7 +375,6 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
-  // Unique Constraint Error
   if (err.name === 'SequelizeUniqueConstraintError') {
     statusCode = 409;
     errorCode = 'DUPLICATE_ENTRY';
@@ -431,7 +384,6 @@ const errorHandler = (err, req, res, next) => {
     suggestion = 'Gunakan data yang berbeda atau periksa apakah data sudah terdaftar sebelumnya.';
   }
 
-  // Foreign Key Constraint Error
   if (err.name === 'SequelizeForeignKeyConstraintError') {
     statusCode = 400;
     errorCode = 'FOREIGN_KEY_ERROR';
@@ -439,7 +391,6 @@ const errorHandler = (err, req, res, next) => {
     suggestion = 'Pastikan data yang dirujuk (misalnya ID pasien atau sesi) sudah ada dan valid.';
   }
 
-  // Database Error
   if (err.name === 'SequelizeDatabaseError') {
     statusCode = 500;
     errorCode = 'DATABASE_ERROR';
@@ -447,15 +398,12 @@ const errorHandler = (err, req, res, next) => {
     suggestion = 'Silakan coba lagi dalam beberapa saat. Jika masalah berlanjut, hubungi administrator.';
   }
 
-  // Connection Error
   if (err.name === 'SequelizeConnectionError') {
     statusCode = 503;
     errorCode = 'DATABASE_CONNECTION_ERROR';
     message = 'Tidak dapat terhubung ke database';
     suggestion = 'Sistem sedang mengalami gangguan koneksi. Silakan coba lagi dalam beberapa saat.';
   }
-
-  // ========== JWT ERRORS ==========
   
   if (err.name === 'JsonWebTokenError') {
     statusCode = 401;
@@ -470,36 +418,27 @@ const errorHandler = (err, req, res, next) => {
     message = 'Sesi Anda telah berakhir';
     suggestion = 'Silakan login kembali untuk melanjutkan.';
   }
-
-  // ========== HTTP ERRORS ==========
   
-  // Not Found
   if (statusCode === 404 || message.toLowerCase().includes('not found')) {
     statusCode = 404;
     errorCode = 'NOT_FOUND';
     suggestion = 'Periksa kembali ID atau parameter yang Anda gunakan.';
   }
 
-  // Forbidden
   if (statusCode === 403 || message.toLowerCase().includes('forbidden') || message.toLowerCase().includes('tidak memiliki akses')) {
     statusCode = 403;
     errorCode = 'FORBIDDEN';
     suggestion = 'Anda tidak memiliki akses untuk melakukan aksi ini. Hubungi administrator jika ini adalah kesalahan.';
   }
 
-  // Unauthorized
   if (statusCode === 401) {
     suggestion = 'Silakan login terlebih dahulu untuk mengakses resource ini.';
   }
 
-  // Bad Request
   if (statusCode === 400) {
     suggestion = 'Periksa kembali data yang Anda masukkan dan pastikan semua field diisi dengan benar.';
   }
-
-  // ========== CUSTOM ERRORS ==========
   
-  // Multer Error (file upload)
   if (err.name === 'MulterError') {
     statusCode = 400;
     errorCode = 'FILE_UPLOAD_ERROR';
@@ -514,8 +453,6 @@ const errorHandler = (err, req, res, next) => {
       suggestion = 'Periksa format dan ukuran file Anda.';
     }
   }
-
-  // ========== BUILD RESPONSE ==========
   
   const response = {
     success: false,
@@ -525,7 +462,6 @@ const errorHandler = (err, req, res, next) => {
     timestamp: new Date().toISOString()
   };
 
-  // Tambahkan detail error di development mode
   if (process.env.NODE_ENV === 'development') {
     response.details = {
       originalError: err.message,
@@ -535,13 +471,9 @@ const errorHandler = (err, req, res, next) => {
     };
   }
 
-  // Kirim response
   res.status(statusCode).json(response);
 };
 
-// ==========================================
-// 8. NOT FOUND HANDLER (404)
-// ==========================================
 const notFound = (req, res, next) => {
   res.status(404).json({
     success: false,
@@ -558,19 +490,12 @@ const notFound = (req, res, next) => {
   });
 };
 
-// ==========================================
-// 9. ASYNC HANDLER WRAPPER
-// ==========================================
-// Helper untuk wrap async functions dan auto catch errors
 const asyncHandler = (fn) => {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 };
 
-// ==========================================
-// EXPORT SEMUA MIDDLEWARE
-// ==========================================
 module.exports = {
   validateBody,
   validatePasienType,

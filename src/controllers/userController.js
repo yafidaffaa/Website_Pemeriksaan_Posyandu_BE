@@ -1,14 +1,10 @@
 const bcrypt = require('bcryptjs');
 const { User, Pasien, CheckupSession } = require('../models');
 
-// ==========================================
-// CREATE User
-// ==========================================
 const createUser = async (req, res, next) => {
   try {
     const { username, password, role, nama_lengkap } = req.body;
 
-    // Cek apakah username sudah exist
     const existingUser = await User.findOne({ where: { username } });
     if (existingUser) {
       return res.status(400).json({
@@ -17,10 +13,8 @@ const createUser = async (req, res, next) => {
       });
     }
 
-    // Hash password
     const hash = await bcrypt.hash(password, 10);
     
-    // Create user
     const user = await User.create({ 
       username, 
       password: hash, 
@@ -29,7 +23,6 @@ const createUser = async (req, res, next) => {
       is_active: true
     });
     
-    // Response tanpa password
     res.status(201).json({
       success: true,
       message: 'User created successfully',
@@ -43,13 +36,10 @@ const createUser = async (req, res, next) => {
       }
     });
   } catch (err) {
-    next(err);  // Pass ke error handler
+    next(err);
   }
 };
 
-// ==========================================
-// GET ALL Users
-// ==========================================
 const getAllUsers = async (req, res, next) => {
   try {
     const users = await User.findAll({ 
@@ -63,13 +53,10 @@ const getAllUsers = async (req, res, next) => {
       data: users
     });
   } catch (err) {
-    next(err);  // Pass ke error handler
+    next(err); 
   }
 };
 
-// ==========================================
-// GET User by ID
-// ==========================================
 const getUserById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -91,19 +78,15 @@ const getUserById = async (req, res, next) => {
       data: user
     });
   } catch (err) {
-    next(err);  // Pass ke error handler
+    next(err); 
   }
 };
 
-// ==========================================
-// UPDATE User
-// ==========================================
 const updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { username, password, role, nama_lengkap, is_active } = req.body;
 
-    // Cek user exist
     const user = await User.findByPk(id);
     if (!user) {
       return res.status(404).json({
@@ -112,7 +95,6 @@ const updateUser = async (req, res, next) => {
       });
     }
 
-    // Jika username diubah, cek apakah sudah ada user dengan username baru
     if (username && username !== user.username) {
       const existingUser = await User.findOne({ where: { username } });
       if (existingUser) {
@@ -124,7 +106,6 @@ const updateUser = async (req, res, next) => {
       user.username = username;
     }
 
-    // Update field lainnya
     if (password) {
       user.password = await bcrypt.hash(password, 10);
     }
@@ -147,13 +128,10 @@ const updateUser = async (req, res, next) => {
       }
     });
   } catch (err) {
-    next(err);  // Pass ke error handler
+    next(err);
   }
 };
 
-// ==========================================
-// DELETE User (Soft Delete)
-// ==========================================
 const deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -166,7 +144,6 @@ const deleteUser = async (req, res, next) => {
       });
     }
 
-    // Soft delete - set is_active = false
     user.is_active = false;
     await user.save();
     
@@ -180,13 +157,10 @@ const deleteUser = async (req, res, next) => {
       }
     });
   } catch (err) {
-    next(err);  // Pass ke error handler
+    next(err); 
   }
 };
 
-// ==========================================
-// HARD DELETE User (Permanen dari Database)
-// ==========================================
 const hardDeleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -208,7 +182,7 @@ const hardDeleteUser = async (req, res, next) => {
       }
     });
   } catch (err) {
-    next(err);  // Pass ke error handler
+    next(err);
   }
 };
 

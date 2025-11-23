@@ -3,9 +3,6 @@ const { calculateChildZScore, calculatePregnantZScore, validateMeasurementData }
 const { Op } = require('sequelize');
 const ExcelJS = require('exceljs');
 
-// ==========================================
-// ROLE PERMISSIONS - Field access control
-// ==========================================
 const allFieldsBalita = [
   'ageMonths', 'weightKg', 'heightCm', 'headCircCm', 'lilaCm',
   'asi', 'vitaminA', 'statusGizi', 'zScoreBMIU', 'stuntingStatus',
@@ -31,9 +28,6 @@ const rolePermissions = {
   }
 };
 
-// ==========================================
-// HELPER: Filter input by role + patientType
-// ==========================================
 const filterAllowed = (input, role, patientType) => {
   const allowed = rolePermissions[role]?.[patientType] || [];
   const out = {};
@@ -43,9 +37,6 @@ const filterAllowed = (input, role, patientType) => {
   return out;
 };
 
-// ==========================================
-// HELPER: Calculate BMI
-// ==========================================
 const calcBMI = (weightKg, heightCm) => {
   if (!weightKg || !heightCm) return null;
   const h = heightCm / 100;
@@ -53,9 +44,6 @@ const calcBMI = (weightKg, heightCm) => {
   return +(weightKg / (h * h)).toFixed(2);
 };
 
-// ==========================================
-// HELPER: Calculate HPL (Perkiraan Persalinan)
-// ==========================================
 const calculatePerkiraanPersalinan = (patient) => {
   const hpm = patient.hpm || patient.hpm_date || patient.tgl_hpht || null;
   if (!hpm) return null;
@@ -65,9 +53,6 @@ const calculatePerkiraanPersalinan = (patient) => {
   return d.toISOString().slice(0, 10);
 };
 
-// ==========================================
-// HELPER: Calculate and save Z-scores (FIXED VERSION)
-// ==========================================
 const calculateAndSaveZScores = async (measurement, checkup) => {
   const patientType = checkup.patient.patientType;
   
@@ -77,7 +62,6 @@ const calculateAndSaveZScores = async (measurement, checkup) => {
       const height = parseFloat(measurement.heightCm);
       const ageMonths = parseFloat(measurement.ageMonths);
 
-      // Validasi data
       const validation = validateMeasurementData({
         weight,
         height,
@@ -102,15 +86,11 @@ const calculateAndSaveZScores = async (measurement, checkup) => {
         });
 
         if (!zResult.error) {
-          // ✅ PERBAIKAN: Pisahkan status gizi dan status stunting
-          // Status Gizi dari BMI/U (classification)
           measurement.statusGizi = zResult.classification;
           measurement.zScoreBMIU = zResult.bmiForAgeZ;
           
-          // Status Stunting dari TB/U (stuntingStatus) 
           measurement.stuntingStatus = zResult.stuntingStatus;
           
-          // Simpan ke dataValues untuk response
           measurement.dataValues.zScoreBMI = zResult.bmiForAgeZ;
           measurement.dataValues.zScoreHeight = zResult.heightForAgeZ;
           measurement.dataValues.zClassification = zResult.classification;
@@ -156,12 +136,10 @@ const calculateAndSaveZScores = async (measurement, checkup) => {
     });
 
     if (!zPreg.error) {
-      // Simpan semua hasil perhitungan
       measurement.zScoreBMIPregnant = zPreg.zScore;
       measurement.stuntingStatus = zPreg.nutritionStatus;
       measurement.statusGizi = zPreg.classification;
       
-      // Simpan ke dataValues untuk response
       measurement.dataValues.bmi = zPreg.bmi;
       measurement.dataValues.zScoreBMIPregnant = zPreg.zScore;
       measurement.dataValues.bmiClassification = zPreg.classification;
@@ -192,14 +170,10 @@ const calculateAndSaveZScores = async (measurement, checkup) => {
   }
 };
 
-// ==========================================
-// HELPER: Validasi input data measurement
-// ==========================================
 const validateMeasurementInput = (data, patientType) => {
   const errors = [];
 
   if (patientType === 'balita') {
-    // Validasi Weight (Berat Badan)
     if (data.weightKg !== undefined && data.weightKg !== null && data.weightKg !== '') {
       const weight = parseFloat(data.weightKg);
       if (isNaN(weight)) {
@@ -213,7 +187,6 @@ const validateMeasurementInput = (data, patientType) => {
       }
     }
 
-    // Validasi Height (Tinggi Badan)
     if (data.heightCm !== undefined && data.heightCm !== null && data.heightCm !== '') {
       const height = parseFloat(data.heightCm);
       if (isNaN(height)) {
@@ -227,7 +200,6 @@ const validateMeasurementInput = (data, patientType) => {
       }
     }
 
-    // Validasi Head Circumference (Lingkar Kepala)
     if (data.headCircCm !== undefined && data.headCircCm !== null && data.headCircCm !== '') {
       const headCirc = parseFloat(data.headCircCm);
       if (isNaN(headCirc)) {
@@ -241,7 +213,6 @@ const validateMeasurementInput = (data, patientType) => {
       }
     }
 
-    // Validasi LILA
     if (data.lilaCm !== undefined && data.lilaCm !== null && data.lilaCm !== '') {
       const lila = parseFloat(data.lilaCm);
       if (isNaN(lila)) {
@@ -256,7 +227,6 @@ const validateMeasurementInput = (data, patientType) => {
     }
 
   } else if (patientType === 'ibu_hamil') {
-    // Validasi Usia Kehamilan
     if (data.ageMonthsPregnant !== undefined && data.ageMonthsPregnant !== null && data.ageMonthsPregnant !== '') {
       const agePregnant = parseInt(data.ageMonthsPregnant);
       if (isNaN(agePregnant)) {
@@ -268,7 +238,6 @@ const validateMeasurementInput = (data, patientType) => {
       }
     }
 
-    // Validasi Weight Pregnant (Berat Badan Ibu Hamil)
     if (data.weightKgPregnant !== undefined && data.weightKgPregnant !== null && data.weightKgPregnant !== '') {
       const weightPregnant = parseFloat(data.weightKgPregnant);
       if (isNaN(weightPregnant)) {
@@ -282,7 +251,6 @@ const validateMeasurementInput = (data, patientType) => {
       }
     }
 
-    // Validasi Height Pregnant (Tinggi Badan Ibu Hamil)
     if (data.heightCmPregnant !== undefined && data.heightCmPregnant !== null && data.heightCmPregnant !== '') {
       const heightPregnant = parseFloat(data.heightCmPregnant);
       if (isNaN(heightPregnant)) {
@@ -296,7 +264,6 @@ const validateMeasurementInput = (data, patientType) => {
       }
     }
 
-    // Validasi LILA Pregnant
     if (data.lilaCmPregnant !== undefined && data.lilaCmPregnant !== null && data.lilaCmPregnant !== '') {
       const lilaPregnant = parseFloat(data.lilaCmPregnant);
       if (isNaN(lilaPregnant)) {
@@ -310,7 +277,6 @@ const validateMeasurementInput = (data, patientType) => {
       }
     }
 
-    // Validasi Tekanan Darah
     if (data.tekananDarah !== undefined && data.tekananDarah !== null && data.tekananDarah !== '') {
       const bpRegex = /^\d{2,3}\/\d{2,3}$/;
       if (!bpRegex.test(data.tekananDarah)) {
@@ -329,7 +295,6 @@ const validateMeasurementInput = (data, patientType) => {
       }
     }
 
-    // Validasi GDS
     if (data.gds !== undefined && data.gds !== null && data.gds !== '') {
       const gds = parseFloat(data.gds);
       if (isNaN(gds)) {
@@ -341,7 +306,6 @@ const validateMeasurementInput = (data, patientType) => {
       }
     }
 
-    // Validasi HB
     if (data.HB !== undefined && data.HB !== null && data.HB !== '') {
       const hb = parseFloat(data.HB);
       if (isNaN(hb)) {
@@ -371,9 +335,6 @@ const validateMeasurementInput = (data, patientType) => {
   };
 };
 
-// ==========================================
-// 1. UPSERT MEASUREMENT (UPDATE dengan validasi)
-// ==========================================
 const upsertMeasurement = async (req, res, next) => {
   try {
     const { checkupSessionId } = req.params;
@@ -401,7 +362,6 @@ const upsertMeasurement = async (req, res, next) => {
     const patientType = checkup.patient.patientType;
     const allowedData = filterAllowed(req.body, role, patientType);
 
-    // ✅ VALIDASI INPUT SEBELUM PROSES
     const validation = validateMeasurementInput(allowedData, patientType);
     if (!validation.isValid) {
       return res.status(400).json({
@@ -412,7 +372,6 @@ const upsertMeasurement = async (req, res, next) => {
       });
     }
 
-    // Hitung umur otomatis untuk balita
     if (patientType === 'balita' && checkup.patient.birthDate) {
       const birthDate = new Date(checkup.patient.birthDate);
       const sessionDate = new Date(checkup.session_date || checkup.sessionDate || new Date());
@@ -428,7 +387,6 @@ const upsertMeasurement = async (req, res, next) => {
           totalMonths--;
         }
         
-        // Force set ageMonths, tidak peduli role
         allowedData.ageMonths = Math.max(0, totalMonths);
         
         console.log('✅ Umur balita dihitung otomatis:', {
@@ -496,9 +454,6 @@ const upsertMeasurement = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// 2. GET MEASUREMENT BY SESSION
-// ==========================================
 const getMeasurementBySession = async (req, res, next) => {
   try {
     const { checkupSessionId } = req.params;
@@ -532,12 +487,10 @@ const getMeasurementBySession = async (req, res, next) => {
       });
     }
 
-    // Hitung ulang Z-scores untuk memastikan data terbaru
     await calculateAndSaveZScores(measurement, measurement.checkup_session);
     await measurement.save();
     await measurement.reload();
 
-    // Tambahan data untuk ibu hamil
     if (measurement.checkup_session?.patient?.patientType === 'ibu_hamil') {
       measurement.dataValues.perkiraanPersalinan =
         measurement.perkiraanPersalinan || calculatePerkiraanPersalinan(measurement.checkup_session.patient);
@@ -566,9 +519,6 @@ const getMeasurementBySession = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// 3. GET MEASUREMENT FOR EDIT
-// ==========================================
 const getMeasurementForEdit = async (req, res, next) => {
   try {
     const { checkupSessionId } = req.params;
@@ -628,9 +578,6 @@ const getMeasurementForEdit = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// 4. GET ALL MEASUREMENTS (LIST - Meja1 only)
-// ==========================================
 const getAllMeasurements = async (req, res, next) => {
   try {
     const { month, year, patientType, page = 1, limit = 50 } = req.query;
@@ -742,9 +689,6 @@ const getAllMeasurements = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// 5. GET MEASUREMENT BY ID (Meja1 only)
-// ==========================================
 const getMeasurementById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -791,9 +735,6 @@ const getMeasurementById = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// 6. EXPORT COMMON
-// ==========================================
 const exportCommon = async (req, res, next, scope) => {
   try {
     const { month, year, patientType } = req.query;
@@ -867,13 +808,9 @@ const exportCommon = async (req, res, next, scope) => {
   }
 };
 
-// ==========================================
-// CREATE BALITA SHEET - FORMAT REGISTER BARU
-// ==========================================
 const createBalitaSheet = (workbook, checkups, scope) => {
   const sheet = workbook.addWorksheet('Register Balita');
 
-  // Header Section - Title (Row 1)
   sheet.mergeCells('A1:V1');
   const titleCell = sheet.getCell('A1');
   titleCell.value = 'DATA PENIMBANGAN POSYANDU BALITA';
@@ -885,25 +822,21 @@ const createBalitaSheet = (workbook, checkups, scope) => {
     fgColor: { argb: 'FF0D9488' }
   };
   
-  // Header Section - Location and Date (Row 2)
   const row2 = sheet.getRow(2);
   row2.height = 25;
   
-  // Posyandu (A2:H2)
   sheet.mergeCells('A2:H2');
   const posyanduCell = sheet.getCell('A2');
   posyanduCell.value = 'Posyandu: Bunga Lily';
   posyanduCell.alignment = { horizontal: 'left', vertical: 'middle' };
   posyanduCell.font = { bold: true, size: 11 };
   
-  // Dusun (I2:P2)
   sheet.mergeCells('I2:P2');
   const dusunCell = sheet.getCell('I2');
   dusunCell.value = 'Dusun: Gendeng';
   dusunCell.alignment = { horizontal: 'left', vertical: 'middle' };
   dusunCell.font = { bold: true, size: 11 };
   
-  // Tanggal (Q2:V2)
   sheet.mergeCells('Q2:V2');
   const tanggalCell = sheet.getCell('Q2');
   const currentDate = new Date();
@@ -916,7 +849,6 @@ const createBalitaSheet = (workbook, checkups, scope) => {
   tanggalCell.alignment = { horizontal: 'right', vertical: 'middle' };
   tanggalCell.font = { bold: true, size: 11 };
 
-  // Main header row (row 3 & 4 & 5)
   const row3 = sheet.getRow(3);
   const row4 = sheet.getRow(4);
   const row5 = sheet.getRow(5);
@@ -924,31 +856,24 @@ const createBalitaSheet = (workbook, checkups, scope) => {
   row4.height = 25;
   row5.height = 25;
   
-  // Kolom A: No (merge 3 rows)
   sheet.mergeCells('A3:A5');
   sheet.getCell('A3').value = 'No';
   
-  // Kolom B: Nama Anak (merge 3 rows)
   sheet.mergeCells('B3:B5');
   sheet.getCell('B3').value = 'Nama\nAnak';
   
-  // Kolom C: Tanggal Lahir (merge 3 rows)
   sheet.mergeCells('C3:C5');
   sheet.getCell('C3').value = 'Tanggal\nLahir';
   
-  // Kolom D: Nama Ortu (merge 3 rows)
   sheet.mergeCells('D3:D5');
   sheet.getCell('D3').value = 'Nama\nOrtu';
   
-  // Kolom E: Usia (Minggu) (merge 3 rows)
   sheet.mergeCells('E3:E5');
   sheet.getCell('E3').value = 'Usia\n(Minggu)';
   
-  // Kolom F: RT (merge 3 rows)
   sheet.mergeCells('F3:F5');
   sheet.getCell('F3').value = 'RT';
   
-  // Kolom G-N: Section BERAT
   sheet.mergeCells('G3:N3');
   sheet.getCell('G3').value = 'BERAT (Kg)';
   sheet.getCell('G3').alignment = { horizontal: 'center', vertical: 'middle' };
@@ -958,7 +883,6 @@ const createBalitaSheet = (workbook, checkups, scope) => {
     fgColor: { argb: 'FFE0E0E0' }
   };
   
-  // Sub-header Berat - Kelompok Umur (row 4)
   sheet.mergeCells('G4:H4');
   sheet.getCell('G4').value = '0-5 BLN';
   
@@ -971,7 +895,6 @@ const createBalitaSheet = (workbook, checkups, scope) => {
   sheet.mergeCells('M4:N4');
   sheet.getCell('M4').value = '24-59 BLN';
   
-  // Sub-sub-header Berat - L/P (row 5)
   sheet.getCell('G5').value = 'L';
   sheet.getCell('H5').value = 'P';
   sheet.getCell('I5').value = 'L';
@@ -981,27 +904,21 @@ const createBalitaSheet = (workbook, checkups, scope) => {
   sheet.getCell('M5').value = 'L';
   sheet.getCell('N5').value = 'P';
   
-  // Kolom O: Status Gizi (merge 3 rows)
   sheet.mergeCells('O3:O5');
   sheet.getCell('O3').value = 'Status\nGizi';
   
-  // Kolom P: TB/PB (merge 3 rows)
   sheet.mergeCells('P3:P5');
   sheet.getCell('P3').value = 'TB/PB\n(Cm)';
   
-  // Kolom Q: Lingkar Kepala (merge 3 rows)
   sheet.mergeCells('Q3:Q5');
   sheet.getCell('Q3').value = 'Lingkar\nKepala\n(Cm)';
   
-  // Kolom R: LILA (merge 3 rows)
   sheet.mergeCells('R3:R5');
   sheet.getCell('R3').value = 'LILA\n(Cm)';
   
-  // Kolom S: ASI (merge 3 rows)
   sheet.mergeCells('S3:S5');
   sheet.getCell('S3').value = 'ASI\nEksklusif';
   
-  // Kolom T-U: Section VITAMIN
   sheet.mergeCells('T3:U3');
   sheet.getCell('T3').value = 'VITAMIN A';
   sheet.getCell('T3').alignment = { horizontal: 'center', vertical: 'middle' };
@@ -1011,18 +928,15 @@ const createBalitaSheet = (workbook, checkups, scope) => {
     fgColor: { argb: 'FFE0E0E0' }
   };
   
-  // Merge row 4-5 untuk Vitamin
   sheet.mergeCells('T4:T5');
   sheet.getCell('T4').value = 'Biru\n(Feb)';
   
   sheet.mergeCells('U4:U5');
   sheet.getCell('U4').value = 'Merah\n(Agt)';
   
-  // Kolom V: Keterangan (merge 3 rows)
   sheet.mergeCells('V3:V5');
   sheet.getCell('V3').value = 'Keterangan';
 
-  // Apply styling to all headers (row 3, 4, 5)
   [3, 4, 5].forEach(rowNum => {
     const row = sheet.getRow(rowNum);
     row.eachCell((cell) => {
@@ -1046,38 +960,35 @@ const createBalitaSheet = (workbook, checkups, scope) => {
     });
   });
 
-  // Set column widths
   sheet.columns = [
-    { width: 5 },   // A - No
-    { width: 20 },  // B - Nama Anak
-    { width: 12 },  // C - Tanggal Lahir
-    { width: 20 },  // D - Nama Ortu
-    { width: 9 },   // E - Usia (Minggu)
-    { width: 6 },   // F - RT
-    { width: 6 },   // G - 0-5 BLN L
-    { width: 6 },   // H - 0-5 BLN P
-    { width: 6 },   // I - 6-11 BLN L
-    { width: 6 },   // J - 6-11 BLN P
-    { width: 6 },   // K - 12-23 BLN L
-    { width: 6 },   // L - 12-23 BLN P
-    { width: 6 },   // M - 24-59 BLN L
-    { width: 6 },   // N - 24-59 BLN P
-    { width: 15 },  // O - Status Gizi
-    { width: 8 },   // P - TB/PB
-    { width: 10 },  // Q - Lingkar Kepala
-    { width: 8 },   // R - LILA
-    { width: 10 },  // S - ASI
-    { width: 8 },   // T - Vitamin Biru
-    { width: 8 },   // U - Vitamin Merah
-    { width: 30 }   // V - Keterangan
+    { width: 5 },   
+    { width: 20 },  
+    { width: 12 },  
+    { width: 20 },  
+    { width: 9 },  
+    { width: 6 },   
+    { width: 6 },   
+    { width: 6 },   
+    { width: 6 },   
+    { width: 6 },   
+    { width: 6 },   
+    { width: 6 },   
+    { width: 6 },  
+    { width: 6 },  
+    { width: 15 },  
+    { width: 8 },   
+    { width: 10 },  
+    { width: 8 },  
+    { width: 10 }, 
+    { width: 8 },  
+    { width: 8 },   
+    { width: 30 }   
   ];
 
-  // Fill data rows (starting from row 6)
   checkups.forEach((c, i) => {
     const m = c.measurements[0];
     const p = c.patient;
 
-    // Calculate age in weeks
     let umurMinggu = p.ageInWeeks || null;
     let umurBulan = null;
     
@@ -1095,20 +1006,19 @@ const createBalitaSheet = (workbook, checkups, scope) => {
       umurBulan = m?.ageMonths || Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30.4375));
     }
 
-    // Tentukan kolom berat berdasarkan umur dan gender
     let beratKolom = ['', '', '', '', '', '', '', ''];
     if (m?.weightKg && umurBulan !== null) {
       const gender = p.gender;
       let kolomIndex = -1;
       
       if (umurBulan >= 0 && umurBulan <= 5) {
-        kolomIndex = gender === 'L' ? 0 : 1; // G atau H
+        kolomIndex = gender === 'L' ? 0 : 1; 
       } else if (umurBulan >= 6 && umurBulan <= 11) {
-        kolomIndex = gender === 'L' ? 2 : 3; // I atau J
+        kolomIndex = gender === 'L' ? 2 : 3; 
       } else if (umurBulan >= 12 && umurBulan <= 23) {
-        kolomIndex = gender === 'L' ? 4 : 5; // K atau L
+        kolomIndex = gender === 'L' ? 4 : 5; 
       } else if (umurBulan >= 24 && umurBulan <= 59) {
-        kolomIndex = gender === 'L' ? 6 : 7; // M atau N
+        kolomIndex = gender === 'L' ? 6 : 7; 
       }
       
       if (kolomIndex >= 0) {
@@ -1117,42 +1027,37 @@ const createBalitaSheet = (workbook, checkups, scope) => {
     }
 
     const rowData = [
-      i + 1,                                      // A - No
-      p.name || '',                               // B - Nama Anak
-      p.birthDate || '',                          // C - Tanggal Lahir
-      p.motherName || '',                         // D - Nama Ortu
-      umurMinggu || '',                           // E - Usia (Minggu) - Menggunakan ageInWeeks
-      p.rt || '',                                 // F - RT
-      beratKolom[0],                              // G - 0-5 BLN L
-      beratKolom[1],                              // H - 0-5 BLN P
-      beratKolom[2],                              // I - 6-11 BLN L
-      beratKolom[3],                              // J - 6-11 BLN P
-      beratKolom[4],                              // K - 12-23 BLN L
-      beratKolom[5],                              // L - 12-23 BLN P
-      beratKolom[6],                              // M - 24-59 BLN L
-      beratKolom[7],                              // N - 24-59 BLN P
-      m?.statusGizi || '',                        // O - Status Gizi
-      m?.heightCm || '',                          // P - TB/PB
-      m?.headCircCm || '',                        // Q - Lingkar Kepala
-      m?.lilaCm || '',                            // R - LILA
-      m?.asi || '',                               // S - ASI
-      m?.vitaminA?.includes('Biru') || m?.vitaminA?.includes('biru') ? '√' : '', // T - Vitamin Biru
-      m?.vitaminA?.includes('Merah') || m?.vitaminA?.includes('merah') ? '√' : '', // U - Vitamin Merah
-      m?.counselingNotes || ''                    // V - Keterangan
+      i + 1,                                    
+      p.name || '',                              
+      p.birthDate || '',                         
+      p.motherName || '',                        
+      umurMinggu || '',                          
+      p.rt || '',                                
+      beratKolom[0],                             
+      beratKolom[1],                            
+      beratKolom[2],                            
+      beratKolom[3],                             
+      beratKolom[4],                             
+      beratKolom[5],                              
+      beratKolom[6],                              
+      beratKolom[7],                              
+      m?.statusGizi || '',                       
+      m?.heightCm || '',                          
+      m?.headCircCm || '',                        
+      m?.lilaCm || '',                           
+      m?.asi || '',                               
+      m?.vitaminA?.includes('Biru') || m?.vitaminA?.includes('biru') ? '√' : '', 
+      m?.vitaminA?.includes('Merah') || m?.vitaminA?.includes('merah') ? '√' : '',
+      m?.counselingNotes || ''                    
     ];
 
     sheet.addRow(rowData);
   });
 
-  // Apply styling untuk data rows
   styleBalitaSheet(sheet);
 };
 
-// ==========================================
-// STYLE BALITA SHEET - UPDATE
-// ==========================================
 const styleBalitaSheet = (sheet) => {
-  // Apply borders to all cells
   sheet.eachRow((row, rowNumber) => {
     row.eachCell((cell) => {
       cell.border = {
@@ -1162,7 +1067,6 @@ const styleBalitaSheet = (sheet) => {
         right: { style: 'thin', color: { argb: 'FF000000' } }
       };
       
-      // Center align untuk data rows (row 6 keatas)
       if (rowNumber > 5) {
         cell.alignment = { 
           vertical: 'middle',
@@ -1172,20 +1076,17 @@ const styleBalitaSheet = (sheet) => {
       }
     });
     
-    // Set height untuk data rows
     if (rowNumber > 5) {
       row.height = 30;
     }
   });
 
-  // Freeze first 5 rows and first 2 columns
   sheet.views = [
     { state: 'frozen', xSplit: 2, ySplit: 5 }
   ];
 
-  // ✅ PAGE SETUP UNTUK PRINT - LANDSCAPE & FIT TO PAGE
   sheet.pageSetup = {
-    paperSize: 9, // A4
+    paperSize: 9,
     orientation: 'landscape',
     fitToPage: true,
     fitToWidth: 1,
@@ -1199,36 +1100,27 @@ const styleBalitaSheet = (sheet) => {
       footer: 0.3
     },
     horizontalCentered: true,
-    printTitlesRow: '1:5' // Repeat header rows 1-5 di setiap halaman
+    printTitlesRow: '1:5' 
   };
 
-  // ✅ Set font size lebih kecil untuk print
   sheet.eachRow((row, rowNumber) => {
     row.eachCell((cell) => {
       if (rowNumber === 1) {
-        // Title
         cell.font = { ...cell.font, size: 14 };
       } else if (rowNumber === 2) {
-        // Info row
         cell.font = { ...cell.font, size: 9 };
       } else if (rowNumber >= 3 && rowNumber <= 5) {
-        // Header columns
         cell.font = { ...cell.font, size: 8 };
       } else {
-        // Data rows
         cell.font = { size: 8 };
       }
     });
   });
 };
 
-// ==========================================
-// CREATE IBU HAMIL SHEET - FORMAT REGISTER SESUAI URUTAN BARU
-// ==========================================
 const createIbuHamilSheet = (workbook, checkups, scope) => {
   const sheet = workbook.addWorksheet('Register Ibu Hamil');
 
-  // Header Section - Title (Row 1)
   sheet.mergeCells('A1:AC1');
   const titleCell = sheet.getCell('A1');
   titleCell.value = 'REGISTER IBU HAMIL UNTUK MOTIVATOR/KADER';
@@ -1239,27 +1131,22 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
     pattern: 'solid',
     fgColor: { argb: 'FF0D9488' }
   };
-  
-  // Header Section - Location and Date (Row 2)
-  // Buat row 2 dengan 4 cell yang akan diisi
+
   const row2 = sheet.getRow(2);
   row2.height = 25;
   
-  // Posyandu (A2:G2)
   sheet.mergeCells('A2:G2');
   const posyanduCell = sheet.getCell('A2');
   posyanduCell.value = 'Posyandu: Bunga Lily';
   posyanduCell.alignment = { horizontal: 'left', vertical: 'middle' };
   posyanduCell.font = { bold: true, size: 11 };
   
-  // Dusun (H2:N2)
   sheet.mergeCells('H2:N2');
   const dusunCell = sheet.getCell('H2');
   dusunCell.value = 'Dusun: Gendeng';
   dusunCell.alignment = { horizontal: 'left', vertical: 'middle' };
   dusunCell.font = { bold: true, size: 11 };
   
-  // Bulan (O2:U2)
   sheet.mergeCells('O2:U2');
   const bulanCell = sheet.getCell('O2');
   const currentDate = new Date();
@@ -1271,40 +1158,32 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
   bulanCell.alignment = { horizontal: 'left', vertical: 'middle' };
   bulanCell.font = { bold: true, size: 11 };
   
-  // Tahun (V2:AC2)
   sheet.mergeCells('V2:AC2');
   const tahunCell = sheet.getCell('V2');
   tahunCell.value = `Tahun: ${currentDate.getFullYear()}`;
   tahunCell.alignment = { horizontal: 'right', vertical: 'middle' };
   tahunCell.font = { bold: true, size: 11 };
 
-  // Main header row (row 3 & 4)
   const row3 = sheet.getRow(3);
   const row4 = sheet.getRow(4);
   row3.height = 30;
   row4.height = 30;
   
-  // Kolom A: No
   sheet.mergeCells('A3:A4');
   sheet.getCell('A3').value = 'No';
   
-  // Kolom B: NIK
   sheet.mergeCells('B3:B4');
   sheet.getCell('B3').value = 'NIK';
   
-  // Kolom C: Nama Ibu (C3) dan Nama Suami (C4)
   sheet.getCell('C3').value = 'Nama Ibu';
   sheet.getCell('C4').value = 'Nama Suami';
   
-  // Kolom D: Umur
   sheet.mergeCells('D3:D4');
   sheet.getCell('D3').value = 'Umur\n(Thn)';
   
-  // Kolom E: Alamat
   sheet.mergeCells('E3:E4');
   sheet.getCell('E3').value = 'Alamat\n(RT)';
   
-  // Kolom F-H: Section Paritas
   sheet.mergeCells('F3:H3');
   sheet.getCell('F3').value = 'Paritas';
   sheet.getCell('F3').alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
@@ -1314,28 +1193,22 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
     fgColor: { argb: 'FFE0E0E0' }
   };
   
-  // Sub-header Paritas (row 4)
   sheet.getCell('F4').value = 'G';
   sheet.getCell('G4').value = 'P';
   sheet.getCell('H4').value = 'A';
   
-  // Kolom I: Jarak Persalinan
   sheet.mergeCells('I3:I4');
   sheet.getCell('I3').value = 'Jarak dg\nPersalinan\nSebelumnya\n(Bulan)';
   
-  // Kolom J: Usia Kandungan
   sheet.mergeCells('J3:J4');
   sheet.getCell('J3').value = 'Usia\nKandungan\n(Bulan)';
   
-  // Kolom K: HPM
   sheet.mergeCells('K3:K4');
   sheet.getCell('K3').value = 'HPM';
   
-  // Kolom L: HPL
   sheet.mergeCells('L3:L4');
   sheet.getCell('L3').value = 'HPL';
   
-  // Kolom M-P: Section Pemeriksaan
   sheet.mergeCells('M3:P3');
   sheet.getCell('M3').value = 'Pemeriksaan';
   sheet.getCell('M3').alignment = { horizontal: 'center', vertical: 'middle' };
@@ -1346,13 +1219,11 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
     fgColor: { argb: 'FFE0E0E0' }
   };
   
-  // Sub-header Pemeriksaan (row 4)
   sheet.getCell('M4').value = 'BB\n(Kg)';
   sheet.getCell('N4').value = 'TD\n(mmHg)';
   sheet.getCell('O4').value = 'TB\n(Cm)';
   sheet.getCell('P4').value = 'LILA\n(Cm)';
   
-  // Kolom Q-X: Section Hasil Laborat
   sheet.mergeCells('Q3:X3');
   sheet.getCell('Q3').value = 'Hasil Laborat';
   sheet.getCell('Q3').alignment = { horizontal: 'center', vertical: 'middle' };
@@ -1363,7 +1234,6 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
     fgColor: { argb: 'FFE0E0E0' }
   };
   
-  // Sub-header Hasil Laborat (row 4)
   sheet.getCell('Q4').value = 'HB';
   sheet.getCell('R4').value = 'Golongan\nDarah';
   sheet.getCell('S4').value = 'Protein\nUrine';
@@ -1373,27 +1243,21 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
   sheet.getCell('W4').value = 'HbsAg';
   sheet.getCell('X4').value = 'GDS';
   
-  // Kolom Y: ANC Terpadu
   sheet.mergeCells('Y3:Y4');
   sheet.getCell('Y3').value = 'ANC\nTerpadu\n(√/X)';
   
-  // Kolom Z: Resiko Lain
   sheet.mergeCells('Z3:Z4');
   sheet.getCell('Z3').value = 'Resiko\nLain';
   
-  // Kolom AA: Jaminan
   sheet.mergeCells('AA3:AA4');
   sheet.getCell('AA3').value = 'Jaminan\n(No Jaminan)';
   
-  // Kolom AB: No HP
   sheet.mergeCells('AB3:AB4');
   sheet.getCell('AB3').value = 'No HP/WA\nIbu';
   
-  // Kolom AC: TTD Cap Kader
   sheet.mergeCells('AC3:AC4');
   sheet.getCell('AC3').value = 'TTD &\nCap Kader';
 
-  // Apply styling to all headers
   [3, 4].forEach(rowNum => {
     const row = sheet.getRow(rowNum);
     row.eachCell((cell) => {
@@ -1417,45 +1281,42 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
     });
   });
 
-  // Set column widths
   sheet.columns = [
-    { width: 5 },   // A - No
-    { width: 18 },  // B - NIK
-    { width: 25 },  // C - Nama Ibu & Suami
-    { width: 8 },   // D - Umur
-    { width: 10 },  // E - Alamat (RT)
-    { width: 5 },   // F - G
-    { width: 5 },   // G - P
-    { width: 5 },   // H - A
-    { width: 12 },  // I - Jarak Persalinan
-    { width: 10 },  // J - Usia Kandungan
-    { width: 12 },  // K - HPM
-    { width: 12 },  // L - HPL
-    { width: 8 },   // M - BB
-    { width: 10 },  // N - TD
-    { width: 8 },   // O - TB
-    { width: 8 },   // P - LILA
-    { width: 8 },   // Q - HB
-    { width: 10 },  // R - Golongan Darah
-    { width: 10 },  // S - Protein Urine
-    { width: 10 },  // T - Reduksi Urine
-    { width: 8 },   // U - HIV
-    { width: 8 },   // V - Sifilis
-    { width: 8 },   // W - HbsAg
-    { width: 8 },   // X - GDS
-    { width: 12 },  // Y - ANC Terpadu
-    { width: 20 },  // Z - Resiko Lain
-    { width: 30 },  // AA - Jaminan
-    { width: 15 },  // AB - No HP
-    { width: 15 }   // AC - TTD Cap Kader
+    { width: 5 },   
+    { width: 18 },
+    { width: 25 },  
+    { width: 8 }, 
+    { width: 10 }, 
+    { width: 5 },  
+    { width: 5 },   
+    { width: 5 },   
+    { width: 12 },  
+    { width: 10 },  
+    { width: 12 },  
+    { width: 12 }, 
+    { width: 8 },   
+    { width: 10 },  
+    { width: 8 },  
+    { width: 8 },   
+    { width: 8 },  
+    { width: 10 }, 
+    { width: 10 },  
+    { width: 10 }, 
+    { width: 8 },  
+    { width: 8 },  
+    { width: 8 },  
+    { width: 8 },  
+    { width: 12 }, 
+    { width: 20 },  
+    { width: 30 },  
+    { width: 15 },  
+    { width: 15 }   
   ];
 
-  // Fill data rows (starting from row 5)
   checkups.forEach((c, i) => {
     const m = c.measurements[0];
     const p = c.patient;
 
-    // Calculate age in years
     let umurTahun = null;
     if (p.birthDate) {
       const today = new Date();
@@ -1467,7 +1328,6 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
       }
     }
 
-    // Format HPL
     let hpl = p.hpl || '';
     if (!hpl && p.hpm) {
       const hpmDate = new Date(p.hpm);
@@ -1475,73 +1335,60 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
       hpl = hpmDate.toISOString().split('T')[0];
     }
 
-    // Add two rows: satu untuk nama ibu, satu untuk nama suami
     const dataRow = sheet.addRow([
-      i + 1,                                    // A - No
-      p.nik || '',                              // B - NIK
-      p.name || '',                             // C - Nama Ibu (baris 1)
-      p.ageInYears || umurTahun || '',          // D - Umur
-      p.rt || '',                               // E - Alamat (RT)
-      p.gravida || '',                          // F - G
-      p.partus || '',                           // G - P
-      p.abortus || '',                          // H - A
-      p.jarakPersalinanSebelumnya || '',        // I - Jarak Persalinan
-      m?.ageMonthsPregnant || '',               // J - Usia Kandungan
-      p.hpm || p.hpm_date || '',                // K - HPM
-      hpl,                                      // L - HPL
-      m?.weightKgPregnant || '',                // M - BB
-      m?.tekananDarah || '',                    // N - TD
-      m?.heightCmPregnant || '',                // O - TB
-      m?.lilaCmPregnant || '',                  // P - LILA
-      m?.HB || '',                              // Q - HB
-      p.golonganDarah || '',                    // R - Golongan Darah
-      m?.proteinUrine || '',                    // S - Protein Urine
-      m?.reduksiUrine || '',                    // T - Reduksi Urine
-      m?.testHiv || '',                         // U - HIV
-      m?.testSifilis || '',                     // V - Sifilis
-      m?.testHbsAg || '',                       // W - HbsAg
-      m?.gds || '',                             // X - GDS
-      m?.ancTerpadu || '',                      // Y - ANC Terpadu
-      m?.resiko || '',                          // Z - Resiko Lain
-      p.nomorJaminan || '',                     // AA - Jaminan
-      p.noTelp || '',                           // AB - No HP
-      ''                                        // AC - TTD Cap Kader
+      i + 1,                                 
+      p.nik || '',                             
+      p.name || '',                          
+      p.ageInYears || umurTahun || '',         
+      p.rt || '',                             
+      p.gravida || '',                         
+      p.partus || '',                          
+      p.abortus || '',                         
+      p.jarakPersalinanSebelumnya || '',       
+      m?.ageMonthsPregnant || '',              
+      p.hpm || p.hpm_date || '',                
+      hpl,                                     
+      m?.weightKgPregnant || '',               
+      m?.tekananDarah || '',                   
+      m?.heightCmPregnant || '',               
+      m?.lilaCmPregnant || '',                 
+      m?.HB || '',                            
+      p.golonganDarah || '',                   
+      m?.proteinUrine || '',                   
+      m?.reduksiUrine || '',                    
+      m?.testHiv || '',                         
+      m?.testSifilis || '',                    
+      m?.testHbsAg || '',                      
+      m?.gds || '',                            
+      m?.ancTerpadu || '',                      
+      m?.resiko || '',                         
+      p.nomorJaminan || '',                    
+      p.noTelp || '',                          
+      ''                                        
     ]);
 
-    // Row untuk nama suami (baris 2)
     const suamiRow = sheet.addRow([
-      '',                                       // A - No (kosong)
-      '',                                       // B - NIK (kosong)
-      p.namaSuami || '',                        // C - Nama Suami (baris 2)
-      '',                                       // D-AC - Sisanya kosong
+      '',                                       
+      '',                                      
+      p.namaSuami || '',                       
+      '',                                       
     ]);
 
-    // Merge cells untuk baris suami (kolom A, B, D sampai AC merge dengan row atas)
     const currentRow = dataRow.number;
     
-    // Merge kolom A (No)
     sheet.mergeCells(currentRow, 1, currentRow + 1, 1);
     
-    // Merge kolom B (NIK)
     sheet.mergeCells(currentRow, 2, currentRow + 1, 2);
-    
-    // Kolom C TIDAK di-merge (Nama Ibu di row 1, Nama Suami di row 2)
-    
-    // Merge kolom D sampai AC (kolom 4 sampai 29)
+        
     for (let col = 4; col <= 29; col++) {
       sheet.mergeCells(currentRow, col, currentRow + 1, col);
     }
   });
 
-  // Apply styling
   styleRegisterSheet(sheet);
 };
 
-// ==========================================
-// STYLE REGISTER SHEET (IBU HAMIL) - UPDATE
-// ==========================================
 const styleRegisterSheet = (sheet) => {
-  // Apply borders to all cells
   sheet.eachRow((row, rowNumber) => {
     row.eachCell((cell) => {
       cell.border = {
@@ -1551,7 +1398,6 @@ const styleRegisterSheet = (sheet) => {
         right: { style: 'thin', color: { argb: 'FF000000' } }
       };
       
-      // Center align untuk data rows (row 5 keatas)
       if (rowNumber > 4) {
         cell.alignment = { 
           vertical: 'middle',
@@ -1561,20 +1407,17 @@ const styleRegisterSheet = (sheet) => {
       }
     });
     
-    // Set height untuk data rows
     if (rowNumber > 4) {
       row.height = 35;
     }
   });
 
-  // Freeze first 4 rows and first 3 columns
   sheet.views = [
     { state: 'frozen', xSplit: 3, ySplit: 4 }
   ];
 
-  // ✅ PAGE SETUP UNTUK PRINT - LANDSCAPE & FIT TO PAGE
   sheet.pageSetup = {
-    paperSize: 9, // A4
+    paperSize: 9,
     orientation: 'landscape',
     fitToPage: true,
     fitToWidth: 1,
@@ -1588,32 +1431,24 @@ const styleRegisterSheet = (sheet) => {
       footer: 0.3
     },
     horizontalCentered: true,
-    printTitlesRow: '1:4' // Repeat header rows 1-4 di setiap halaman
+    printTitlesRow: '1:4' 
   };
 
-  // ✅ Set font size lebih kecil untuk print
   sheet.eachRow((row, rowNumber) => {
     row.eachCell((cell) => {
       if (rowNumber === 1) {
-        // Title
         cell.font = { ...cell.font, size: 14 };
       } else if (rowNumber === 2) {
-        // Info row
         cell.font = { ...cell.font, size: 9 };
       } else if (rowNumber >= 3 && rowNumber <= 4) {
-        // Header columns
         cell.font = { ...cell.font, size: 7 };
       } else {
-        // Data rows
         cell.font = { size: 7 };
       }
     });
   });
 };
 
-// ==========================================
-// STYLE SHEET HELPER
-// ==========================================
 const styleSheet = (sheet) => {
   const headerRow = sheet.getRow(1);
   headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -1652,13 +1487,9 @@ const styleSheet = (sheet) => {
   ];
 };
 
-// ==========================================
-// CREATE PENERIMA MANFAAT SHEET
-// ==========================================
 const createPenerimaManfaatSheet = (workbook, checkups) => {
   const sheet = workbook.addWorksheet('Penerima Manfaat Ibu Hamil');
 
-  // Header Section - Title (Row 1)
   sheet.mergeCells('A1:I1');
   const titleCell = sheet.getCell('A1');
   titleCell.value = 'DATA PENERIMA MANFAAT IBU HAMIL';
@@ -1670,25 +1501,21 @@ const createPenerimaManfaatSheet = (workbook, checkups) => {
     fgColor: { argb: 'FF0D9488' }
   };
   
-  // Header Section - Location and Date (Row 2)
   const row2 = sheet.getRow(2);
   row2.height = 25;
   
-  // Posyandu (A2:C2)
   sheet.mergeCells('A2:C2');
   const posyanduCell = sheet.getCell('A2');
   posyanduCell.value = 'Posyandu: Bunga Lily';
   posyanduCell.alignment = { horizontal: 'left', vertical: 'middle' };
   posyanduCell.font = { bold: true, size: 11 };
   
-  // Dusun (D2:F2)
   sheet.mergeCells('D2:F2');
   const dusunCell = sheet.getCell('D2');
   dusunCell.value = 'Dusun: Gendeng';
   dusunCell.alignment = { horizontal: 'left', vertical: 'middle' };
   dusunCell.font = { bold: true, size: 11 };
   
-  // Tanggal (G2:I2)
   sheet.mergeCells('G2:I2');
   const tanggalCell = sheet.getCell('G2');
   const currentDate = new Date();
@@ -1701,11 +1528,9 @@ const createPenerimaManfaatSheet = (workbook, checkups) => {
   tanggalCell.alignment = { horizontal: 'right', vertical: 'middle' };
   tanggalCell.font = { bold: true, size: 11 };
 
-  // Main header row (row 3)
   const row3 = sheet.getRow(3);
   row3.height = 30;
   
-  // Define headers
   const headers = [
     'No',
     'Nama',
@@ -1718,7 +1543,6 @@ const createPenerimaManfaatSheet = (workbook, checkups) => {
     'Resiko'
   ];
   
-  // Set headers
   headers.forEach((header, index) => {
     const cell = sheet.getCell(3, index + 1);
     cell.value = header;
@@ -1741,25 +1565,22 @@ const createPenerimaManfaatSheet = (workbook, checkups) => {
     };
   });
 
-  // Set column widths
   sheet.columns = [
-    { width: 5 },   // A - No
-    { width: 25 },  // B - Nama
-    { width: 15 },  // C - Tanggal Lahir
-    { width: 25 },  // D - Nama Suami
-    { width: 20 },  // E - No KK
-    { width: 20 },  // F - NIK
-    { width: 20 },  // G - Tanggal Pemeriksaan Pertama
-    { width: 15 },  // H - HPL
-    { width: 15 }   // I - Resiko
+    { width: 5 },  
+    { width: 25 },  
+    { width: 15 },  
+    { width: 25 }, 
+    { width: 20 }, 
+    { width: 20 },  
+    { width: 20 }, 
+    { width: 15 }, 
+    { width: 15 }   
   ];
 
-  // Fill data rows (starting from row 4)
   checkups.forEach((c, i) => {
     const m = c.measurements[0];
     const p = c.patient;
 
-    // Format HPL
     let hpl = p.hpl || '';
     if (!hpl && p.hpm) {
       const hpmDate = new Date(p.hpm);
@@ -1767,7 +1588,6 @@ const createPenerimaManfaatSheet = (workbook, checkups) => {
       hpl = hpmDate.toISOString().split('T')[0];
     }
 
-    // Format dates untuk display
     const formatDate = (dateStr) => {
       if (!dateStr) return '';
       const date = new Date(dateStr);
@@ -1779,20 +1599,19 @@ const createPenerimaManfaatSheet = (workbook, checkups) => {
     };
 
     const rowData = [
-      i + 1,                                          // A - No
-      p.name || '',                                   // B - Nama
-      formatDate(p.birthDate) || '',                  // C - Tanggal Lahir
-      p.namaSuami || '',                              // D - Nama Suami
-      p.noKK || '',                                   // E - No KK
-      p.nik || '',                                    // F - NIK
-      formatDate(p.tglPemeriksaanPertama) || '',      // G - Tanggal Pemeriksaan Pertama
-      formatDate(hpl) || '',                          // H - HPL
-      m?.resiko || ''                                 // I - Resiko
+      i + 1,                                        
+      p.name || '',                                  
+      formatDate(p.birthDate) || '',                
+      p.namaSuami || '',                             
+      p.noKK || '',                                 
+      p.nik || '',                                   
+      formatDate(p.tglPemeriksaanPertama) || '',     
+      formatDate(hpl) || '',                         
+      m?.resiko || ''                                
     ];
 
     const dataRow = sheet.addRow(rowData);
     
-    // Apply styling to data row
     dataRow.eachCell((cell) => {
       cell.alignment = { 
         vertical: 'middle',
@@ -1810,15 +1629,10 @@ const createPenerimaManfaatSheet = (workbook, checkups) => {
     dataRow.height = 30;
   });
 
-  // Apply styling
   stylePenerimaManfaatSheet(sheet);
 };
 
-// ==========================================
-// STYLE PENERIMA MANFAAT SHEET
-// ==========================================
 const stylePenerimaManfaatSheet = (sheet) => {
-  // Apply borders to all cells
   sheet.eachRow((row, rowNumber) => {
     row.eachCell((cell) => {
       if (!cell.border) {
@@ -1832,18 +1646,16 @@ const stylePenerimaManfaatSheet = (sheet) => {
     });
   });
 
-  // Freeze first 3 rows and first column
   sheet.views = [
     { state: 'frozen', xSplit: 1, ySplit: 3 }
   ];
 
-  // ✅ PAGE SETUP UNTUK PRINT - LANDSCAPE & FIT TO PAGE
   sheet.pageSetup = {
-    paperSize: 9, // A4
-    orientation: 'landscape', // Landscape mode
+    paperSize: 9,
+    orientation: 'landscape',
     fitToPage: true,
-    fitToWidth: 1, // Fit semua kolom dalam 1 halaman lebar
-    fitToHeight: 0, // Tinggi unlimited (boleh multiple pages)
+    fitToWidth: 1,
+    fitToHeight: 0, 
     margins: {
       left: 0.25,
       right: 0.25,
@@ -1853,30 +1665,23 @@ const stylePenerimaManfaatSheet = (sheet) => {
       footer: 0.3
     },
     horizontalCentered: true,
-    printArea: undefined, // Print all area
-    printTitlesRow: '1:3' // Repeat header rows 1-3 di setiap halaman
+    printArea: undefined, 
+    printTitlesRow: '1:3' 
   };
 
-  // ✅ Set font size lebih kecil untuk semua cell agar pas di print
   sheet.eachRow((row, rowNumber) => {
     row.eachCell((cell) => {
       if (rowNumber <= 2) {
-        // Baris 1-2 (Header title dan info)
         cell.font = { ...cell.font, size: 10 };
       } else if (rowNumber === 3) {
-        // Baris 3 (Header kolom)
         cell.font = { ...cell.font, size: 9 };
       } else {
-        // Data rows
         cell.font = { size: 8 };
       }
     });
   });
 };
 
-// ==========================================
-// EXPORT PENERIMA MANFAAT
-// ==========================================
 const exportPenerimaManfaat = async (req, res, next) => {
   try {
     const { month, year } = req.query;
@@ -1893,7 +1698,6 @@ const exportPenerimaManfaat = async (req, res, next) => {
     const endDay = new Date(year, month, 0).getDate();
     const end = `${year}-${mm}-${String(endDay).padStart(2, '0')}`;
 
-    // Hanya ambil data ibu hamil
     const checkups = await CheckupSession.findAll({
       where: { session_date: { [Op.between]: [start, end] } },
       include: [
@@ -1935,31 +1739,20 @@ const exportPenerimaManfaat = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// EXPORT KELURAHAN
-// ==========================================
 const exportKelurahan = async (req, res, next) => {
   return exportCommon(req, res, next, 'kelurahan');
 };
 
-// ==========================================
-// EXPORT PUSKESMAS
-// ==========================================
 const exportPuskesmas = async (req, res, next) => {
   return exportCommon(req, res, next, 'puskesmas');
 };
 
-// ==========================================
-// 8. GET STUNTING STATISTICS (PIE CHART)
-// ==========================================
 const getStuntingStatistics = async (req, res, next) => {
   try {
     const { patientType, month, year } = req.query;
 
-    // Build where clause untuk filter patient type
     const patientWhere = patientType ? { patientType } : {};
 
-    // Build date filter untuk checkup session
     let dateFilter = {};
     if (month && year) {
       const mm = String(month).padStart(2, '0');
@@ -1971,7 +1764,6 @@ const getStuntingStatistics = async (req, res, next) => {
       dateFilter.session_date = { [Op.between]: [`${year}-01-01`, `${year}-12-31`] };
     }
 
-    // Get all measurements with patient info
     const measurements = await Measurement.findAll({
       include: [
         {
@@ -1991,7 +1783,6 @@ const getStuntingStatistics = async (req, res, next) => {
       ]
     });
 
-    // Initialize counters
     const stats = {
       balita: {
         stunting: 0,
@@ -2010,12 +1801,10 @@ const getStuntingStatistics = async (req, res, next) => {
       }
     };
 
-    // Process measurements
     measurements.forEach(m => {
       const patType = m.checkup_session?.patient?.patientType;
       const stuntingStatus = m.stuntingStatus?.toLowerCase() || '';
 
-      // Check if stunting
       const isStunting = 
         stuntingStatus.includes('stunted') || 
         stuntingStatus.includes('pendek') ||
@@ -2039,7 +1828,6 @@ const getStuntingStatistics = async (req, res, next) => {
       }
     });
 
-    // Calculate totals
     stats.total.stunting = stats.balita.stunting + stats.ibu_hamil.stunting;
     stats.total.tidakStunting = stats.balita.tidakStunting + stats.ibu_hamil.tidakStunting;
     stats.total.total = stats.balita.total + stats.ibu_hamil.total;
@@ -2059,9 +1847,6 @@ const getStuntingStatistics = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// 9. GET STUNTING TRENDS (BAR CHART - 4 MONTHS)
-// ==========================================
 const getStuntingTrends = async (req, res, next) => {
   try {
     const { month, year } = req.query;
@@ -2076,14 +1861,12 @@ const getStuntingTrends = async (req, res, next) => {
     const selectedMonth = parseInt(month);
     const selectedYear = parseInt(year);
 
-    // Generate 4 months data (current + 3 previous months)
     const monthsData = [];
     
     for (let i = 3; i >= 0; i--) {
       let targetMonth = selectedMonth - i;
       let targetYear = selectedYear;
 
-      // Handle year change
       if (targetMonth <= 0) {
         targetMonth = 12 + targetMonth;
         targetYear = selectedYear - 1;
@@ -2094,7 +1877,6 @@ const getStuntingTrends = async (req, res, next) => {
       const endDay = new Date(targetYear, targetMonth, 0).getDate();
       const endDate = `${targetYear}-${monthStr}-${String(endDay).padStart(2, '0')}`;
 
-      // Get measurements for this month
       const measurements = await Measurement.findAll({
         include: [
           {
@@ -2115,7 +1897,6 @@ const getStuntingTrends = async (req, res, next) => {
         ]
       });
 
-      // Count statistics
       const monthStats = {
         balitaStunting: 0,
         balitaTidakStunting: 0,
@@ -2148,7 +1929,6 @@ const getStuntingTrends = async (req, res, next) => {
         }
       });
 
-      // Month names in Indonesian
       const monthNames = [
         'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -2182,9 +1962,6 @@ const getStuntingTrends = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// EXPORT MODULES
-// ==========================================
 module.exports = {
   validateMeasurementInput,
   upsertMeasurement,

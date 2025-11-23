@@ -7,7 +7,6 @@ const pasienRoutes = require('./pasienRoutes');
 const checkupRoutes = require('./checkupRoutes');
 const measurementRoutes = require('./MeasurementRoutes');
 
-// prefix
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/pasien', pasienRoutes);
