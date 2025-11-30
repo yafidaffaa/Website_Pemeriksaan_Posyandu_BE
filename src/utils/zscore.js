@@ -388,11 +388,11 @@ function validateMeasurementData(data, patientType) {
     if (!data.gender) {
       errors.push('Jenis kelamin harus diisi');
     }
-    if (data.weight && (data.weight < 2 || data.weight > 30)) {
-      errors.push('Berat badan balita tidak wajar (harus antara 2-30 kg)');
+    if (data.weight && (data.weight < 1 || data.weight > 50)) {
+      errors.push('Berat badan balita tidak wajar (harus antara 1-50 kg)');
     }
-    if (data.height && (data.height < 45 || data.height > 120)) {
-      errors.push('Tinggi badan balita tidak wajar (harus antara 45-120 cm)');
+    if (data.height && (data.height < 30 || data.height > 150)) {
+      errors.push('Tinggi badan balita tidak wajar (harus antara 30-150 cm)');
     }
   } else if (patientType === 'ibu_hamil') {
     if (!data.weight || data.weight <= 0) {
@@ -401,14 +401,14 @@ function validateMeasurementData(data, patientType) {
     if (!data.height || data.height <= 0) {
       errors.push('Tinggi badan ibu hamil harus lebih dari 0 cm');
     }
-    if (data.weight && (data.weight < 30 || data.weight > 150)) {
-      errors.push('Berat badan ibu hamil tidak wajar (harus antara 30-150 kg)');
+    if (data.weight && (data.weight < 30 || data.weight > 200)) {
+      errors.push('Berat badan ibu hamil tidak wajar (harus antara 30-200 kg)');
     }
-    if (data.height && (data.height < 130 || data.height > 200)) {
-      errors.push('Tinggi badan ibu hamil tidak wajar (harus antara 130-200 cm)');
+    if (data.height && (data.height < 100 || data.height > 200)) {
+      errors.push('Tinggi badan ibu hamil tidak wajar (harus antara 100-200 cm)');
     }
-    if (data.lila && (data.lila < 15 || data.lila > 40)) {
-      errors.push('LILA tidak wajar (harus antara 15-40 cm)');
+    if (data.lila && (data.lila < 15 || data.lila > 50)) {
+      errors.push('LILA tidak wajar (harus antara 15-50 cm)');
     }
   }
 

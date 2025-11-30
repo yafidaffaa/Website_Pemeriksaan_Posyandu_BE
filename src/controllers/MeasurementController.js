@@ -929,10 +929,10 @@ const createBalitaSheet = (workbook, checkups, scope) => {
   };
   
   sheet.mergeCells('T4:T5');
-  sheet.getCell('T4').value = 'Biru\n(Feb)';
+  sheet.getCell('T4').value = 'Biru';
   
   sheet.mergeCells('U4:U5');
-  sheet.getCell('U4').value = 'Merah\n(Agt)';
+  sheet.getCell('U4').value = 'Merah';
   
   sheet.mergeCells('V3:V5');
   sheet.getCell('V3').value = 'Keterangan';
@@ -1050,8 +1050,15 @@ const createBalitaSheet = (workbook, checkups, scope) => {
       m?.vitaminA?.includes('Merah') || m?.vitaminA?.includes('merah') ? '√' : '',
       m?.counselingNotes || ''                    
     ];
+    const addedRow = sheet.addRow(rowData);
 
-    sheet.addRow(rowData);
+    const keteranganText = m?.counselingNotes || '';
+    if (keteranganText && keteranganText.length > 0) {
+    const estimatedLines = Math.ceil(keteranganText.length / 30);
+    const minHeight = 30;
+    const calculatedHeight = Math.max(minHeight, estimatedLines * 15);
+    addedRow.height = calculatedHeight;
+  }
   });
 
   styleBalitaSheet(sheet);
@@ -1076,7 +1083,7 @@ const styleBalitaSheet = (sheet) => {
       }
     });
     
-    if (rowNumber > 5) {
+    if (rowNumber > 5 && !row.height) {
       row.height = 30;
     }
   });
@@ -1110,9 +1117,9 @@ const styleBalitaSheet = (sheet) => {
       } else if (rowNumber === 2) {
         cell.font = { ...cell.font, size: 9 };
       } else if (rowNumber >= 3 && rowNumber <= 5) {
-        cell.font = { ...cell.font, size: 8 };
+        cell.font = { ...cell.font, size: 9 };
       } else {
-        cell.font = { size: 8 };
+        cell.font = { size: 9 };
       }
     });
   });
@@ -1244,7 +1251,7 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
   sheet.getCell('X4').value = 'GDS';
   
   sheet.mergeCells('Y3:Y4');
-  sheet.getCell('Y3').value = 'ANC\nTerpadu\n(√/X)';
+  sheet.getCell('Y3').value = 'ANC\nTerpadu';
   
   sheet.mergeCells('Z3:Z4');
   sheet.getCell('Z3').value = 'Resiko\nLain';
@@ -1383,6 +1390,15 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
     for (let col = 4; col <= 29; col++) {
       sheet.mergeCells(currentRow, col, currentRow + 1, col);
     }
+
+    const resikoText = m?.resiko || '';
+    if (resikoText && resikoText.length > 20) {
+    const estimatedLines = Math.ceil(resikoText.length / 20);
+    const minHeight = 35;
+    const calculatedHeight = Math.max(minHeight, estimatedLines * 15);
+    dataRow.height = calculatedHeight;
+    suamiRow.height = calculatedHeight;
+  }
   });
 
   styleRegisterSheet(sheet);
@@ -1441,9 +1457,9 @@ const styleRegisterSheet = (sheet) => {
       } else if (rowNumber === 2) {
         cell.font = { ...cell.font, size: 9 };
       } else if (rowNumber >= 3 && rowNumber <= 4) {
-        cell.font = { ...cell.font, size: 7 };
+        cell.font = { ...cell.font, size: 9 };
       } else {
-        cell.font = { size: 7 };
+        cell.font = { size: 10 };
       }
     });
   });
@@ -1574,7 +1590,7 @@ const createPenerimaManfaatSheet = (workbook, checkups) => {
     { width: 20 },  
     { width: 20 }, 
     { width: 15 }, 
-    { width: 15 }   
+    { width: 20 }   
   ];
 
   checkups.forEach((c, i) => {
