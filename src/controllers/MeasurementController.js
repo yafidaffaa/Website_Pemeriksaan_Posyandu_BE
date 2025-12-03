@@ -766,11 +766,22 @@ const exportCommon = async (req, res, next, scope) => {
     });
 
     if (checkups.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: `Tidak ada data pemeriksaan untuk periode ${month}/${year}. Pastikan sudah ada data yang diinput.`
-      });
-    }
+  return res.status(200).json({
+    success: false,
+    message: `Tidak ada data pemeriksaan untuk periode ${month}/${year}. Pastikan sudah ada data yang diinput.`
+  });
+}
+
+const hasValidData = checkups.some(c => 
+  c.measurements && c.measurements.length > 0 && c.measurements[0]
+);
+
+if (!hasValidData) {
+  return res.status(200).json({
+    success: false,
+    message: `Tidak ada data pemeriksaan yang lengkap untuk periode ${month}/${year}. Pasien sudah terdaftar dalam antrian tetapi belum ada data pengukuran yang diinput.`
+  });
+}
 
     const workbook = new ExcelJS.Workbook();
     
@@ -810,6 +821,16 @@ const exportCommon = async (req, res, next, scope) => {
 
 const createBalitaSheet = (workbook, checkups, scope) => {
   const sheet = workbook.addWorksheet('Register Balita');
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
 
   sheet.mergeCells('A1:V1');
   const titleCell = sheet.getCell('A1');
@@ -1029,7 +1050,7 @@ const createBalitaSheet = (workbook, checkups, scope) => {
     const rowData = [
       i + 1,                                    
       p.name || '',                              
-      p.birthDate || '',                         
+      formatDate(p.birthDate),                         
       p.motherName || '',                        
       umurMinggu || '',                          
       p.rt || '',                                
@@ -1127,6 +1148,16 @@ const styleBalitaSheet = (sheet) => {
 
 const createIbuHamilSheet = (workbook, checkups, scope) => {
   const sheet = workbook.addWorksheet('Register Ibu Hamil');
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
 
   sheet.mergeCells('A1:AC1');
   const titleCell = sheet.getCell('A1');
@@ -1353,8 +1384,8 @@ const createIbuHamilSheet = (workbook, checkups, scope) => {
       p.abortus || '',                         
       p.jarakPersalinanSebelumnya || '',       
       m?.ageMonthsPregnant || '',              
-      p.hpm || p.hpm_date || '',                
-      hpl,                                     
+      formatDate(p.hpm || p.hpm_date) || '',                
+      formatDate(hpl),                                     
       m?.weightKgPregnant || '',               
       m?.tekananDarah || '',                   
       m?.heightCmPregnant || '',               
@@ -1729,11 +1760,22 @@ const exportPenerimaManfaat = async (req, res, next) => {
     });
 
     if (checkups.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: `Tidak ada data ibu hamil untuk periode ${month}/${year}. Pastikan sudah ada data yang diinput.`
-      });
-    }
+  return res.status(200).json({
+    success: false,
+    message: `Tidak ada data ibu hamil untuk periode ${month}/${year}. Pastikan sudah ada data yang diinput.`
+  });
+}
+
+const hasValidData = checkups.some(c => 
+  c.measurements && c.measurements.length > 0
+);
+
+if (!hasValidData) {
+  return res.status(200).json({
+    success: false,
+    message: `Data ibu hamil untuk periode ${month}/${year} belum memiliki pengukuran yang lengkap. Silakan lengkapi data pemeriksaan terlebih dahulu.`
+  });
+}
 
     const workbook = new ExcelJS.Workbook();
     createPenerimaManfaatSheet(workbook, checkups);
