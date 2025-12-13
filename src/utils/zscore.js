@@ -184,17 +184,8 @@ function calculateChildZScore({ ageMonths, weight, height, gender }) {
     const bmiRef = interpolateReference(BMI_FOR_AGE_REF[genderKey], ageMonths);
     const heightRef = interpolateReference(HEIGHT_FOR_AGE_REF[genderKey], ageMonths);
 
-    console.log('📊 Referensi WHO untuk umur', ageMonths, 'bulan:');
-    console.log('   BMI Median:', bmiRef.median, 'SD:', bmiRef.sd);
-    console.log('   Height Median:', heightRef.median, 'SD:', heightRef.sd);
-    console.log('   BMI Aktual:', bmi);
-    console.log('   Height Aktual:', height);
-
     const zBMI = (bmi - bmiRef.median) / bmiRef.sd;
     const zHeight = (height - heightRef.median) / heightRef.sd;
-
-    console.log('   Z-Score BMI/U:', zBMI);
-    console.log('   Z-Score TB/U:', zHeight);
 
     let classification = 'Normal';
     if (zBMI < -3) {
@@ -230,7 +221,7 @@ function calculateChildZScore({ ageMonths, weight, height, gender }) {
     };
 
   } catch (error) {
-    console.error('❌ Error dalam perhitungan Z-score balita:', error.message);
+    console.error('Error dalam perhitungan Z-score balita:', error.message);
     return {
       bmi: null,
       bmiForAgeZ: null,
@@ -341,14 +332,6 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
       }
     }
 
-    console.log('📊 Status Gizi Ibu Hamil:');
-    console.log('   BMI:', bmi.toFixed(2));
-    console.log('   Klasifikasi BMI:', bmiClassification);
-    console.log('   Status Nutrisi:', nutritionStatus);
-    console.log('   LILA:', lila || 'Tidak diukur', 'cm');
-    console.log('   Status LILA:', lilaStatus || 'Tidak tersedia');
-    console.log('   Risiko Stunting Bayi:', stuntingRisk);
-
     return {
       bmi: +bmi.toFixed(2),
       zScore: +zScore.toFixed(2),
@@ -362,7 +345,7 @@ function calculatePregnantZScore({ weight, height, ageMonthsPregnant, lila }) {
     };
 
   } catch (error) {
-    console.error('❌ Error dalam perhitungan status gizi ibu hamil:', error.message);
+    console.error('Error dalam perhitungan status gizi ibu hamil:', error.message);
     return {
       bmi: null,
       zScore: null,

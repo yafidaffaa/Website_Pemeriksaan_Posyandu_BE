@@ -95,12 +95,7 @@ const calculateAndSaveZScores = async (measurement, checkup) => {
           measurement.dataValues.zScoreHeight = zResult.heightForAgeZ;
           measurement.dataValues.zClassification = zResult.classification;
           measurement.dataValues.stuntingStatus = zResult.stuntingStatus;
-          
-          console.log('✅ Z-Score Balita berhasil dihitung:');
-          console.log('   - Status Gizi:', zResult.classification);
-          console.log('   - Z-Score BMI/U:', zResult.bmiForAgeZ);
-          console.log('   - Status Stunting:', zResult.stuntingStatus);
-          console.log('   - Z-Score TB/U:', zResult.heightForAgeZ);
+
         } else {
           console.error('[ZScore Error]', zResult.error);
           measurement.dataValues.calculationError = zResult.error;
@@ -147,13 +142,7 @@ const calculateAndSaveZScores = async (measurement, checkup) => {
       measurement.dataValues.stuntingRisk = zPreg.stuntingRisk;
       measurement.dataValues.stuntingRiskDetail = zPreg.stuntingRiskDetail;
       measurement.dataValues.lilaStatus = zPreg.lilaStatus;
-      
-      console.log('✅ Status Gizi Ibu Hamil berhasil dihitung:');
-      console.log('   - BMI:', bmiP);
-      console.log('   - Klasifikasi:', zPreg.classification);
-      console.log('   - Status Nutrisi:', zPreg.nutritionStatus);
-      console.log('   - Risiko Stunting Bayi:', zPreg.stuntingRisk);
-      console.log('   - Status LILA:', zPreg.lilaStatus || 'Tidak diukur');
+
     } else {
       console.error('[ZScore Error]', zPreg.error);
       measurement.dataValues.calculationError = zPreg.error;
@@ -389,11 +378,6 @@ const upsertMeasurement = async (req, res, next) => {
         
         allowedData.ageMonths = Math.max(0, totalMonths);
         
-        console.log('✅ Umur balita dihitung otomatis:', {
-          birthDate: birthDate.toISOString().split('T')[0],
-          sessionDate: sessionDate.toISOString().split('T')[0],
-          ageMonths: allowedData.ageMonths
-        });
       }
     }
 

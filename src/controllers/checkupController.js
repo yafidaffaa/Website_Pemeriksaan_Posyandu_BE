@@ -40,15 +40,10 @@ const checkMeasurementComplete = (measurements = [], patientType) => {
   const required = requiredFieldsByPatientType(patientType);
 
   if (!measurements || measurements.length === 0) {
-    console.log('❌ Tidak ada measurements');
     return false;
   }
 
   const measurement = measurements[0];
-
-  console.log('\n🔍 Checking measurement completeness:');
-  console.log('   Patient Type:', patientType);
-  console.log('   Required Fields:', required);
 
   const missingFields = [];
   const presentFields = [];
@@ -59,23 +54,15 @@ const checkMeasurementComplete = (measurements = [], patientType) => {
     
     if (isPresent) {
       presentFields.push(field);
-      console.log(`   ✅ ${field}: ${value}`);
     } else {
       missingFields.push(field);
-      console.log(`   ❌ ${field}: kosong`);
     }
   });
 
   const isComplete = missingFields.length === 0;
 
-  console.log('\n📊 Summary:');
-  console.log(`   Total Required: ${required.length}`);
-  console.log(`   Present: ${presentFields.length}`);
-  console.log(`   Missing: ${missingFields.length}`);
   if (missingFields.length > 0) {
-    console.log(`   Missing Fields: ${missingFields.join(', ')}`);
   }
-  console.log(`   Result: ${isComplete ? '✅ LENGKAP' : '❌ BELUM LENGKAP'}\n`);
 
   return isComplete;
 };

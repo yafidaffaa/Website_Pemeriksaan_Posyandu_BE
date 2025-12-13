@@ -57,37 +57,44 @@ const seedUsers = async () => {
     const userCount = await User.count();
 
     if (userCount === 0) {
-      const defaultUsers = [
-        { username: 'meja1', role: 'meja1', nama_lengkap: 'Admin Meja 1' },
-        { username: 'meja2', role: 'meja2', nama_lengkap: 'Operator Meja 2' },
-        { username: 'meja3', role: 'meja3', nama_lengkap: 'Operator Meja 3' },
-      ];
+      const defaultUsers = [];
+
+      for (let i = 1; i <= 3; i++) {
+        const username = process.env[`SEED_USER_${i}_USERNAME`];
+        const role = process.env[`SEED_USER_${i}_ROLE`];
+        const nama_lengkap = process.env[`SEED_USER_${i}_NAME`];
+        const password = process.env[`SEED_USER_${i}_PASSWORD`] || 'password123';
+
+        if (username && role && nama_lengkap) {
+          defaultUsers.push({ username, role, nama_lengkap, password });
+        }
+      }
 
       for (const userData of defaultUsers) {
-        const hash = await bcrypt.hash('password123', 10);
+        const hash = await bcrypt.hash(userData.password, 10);
         await User.create({
-          ...userData,
+          username: userData.username,
+          role: userData.role,
+          nama_lengkap: userData.nama_lengkap,
           password: hash,
           is_active: true
         });
-        console.log(`✅ Created default user: ${userData.username} (password: password123)`);
       }
-    } else {
-      console.log('ℹ️ Default users already exist — skipping seeding.');
     }
   } catch (error) {
-    console.error('❌ Error seeding users:', error.message);
   }
 };
 
-sequelize.sync({ alter: true })
-  .then(async () => {
-    console.log('✅ Database synced with force: true');
-    await seedUsers();
-  })
-  .catch(err => {
-    console.error('❌ Error syncing database:', err.message);
-  });
+if (process.env.NODE_ENV === 'production' || process.env.DB_SYNC === 'true') {
+
+  sequelize.sync({ alter: false })
+    .then(async () => {
+      await seedUsers();
+      console.log('Database synchronized');
+    })
+    .catch(err => {
+    });
+}
 
 module.exports = {
   sequelize,
