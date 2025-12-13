@@ -7,28 +7,9 @@ const routes = require('./routes');
 
 const app = express();
 
-const allowedOrigins = [
-  `http://${process.env.IP_FE}`,
-  `http://${process.env.HOST}:3000`,
-  'http://localhost:3000',
-  'http://localhost:5173',
-];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      `http://${process.env.IP_FE}`,
-      `http://${process.env.HOST}:3000`,
-      'http://localhost:3000',
-      'http://localhost:5173',
-    ];
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
+  origin: process.env.CLIENT_URL,
+  credentials: true
 }));
 
 app.use(express.json());
